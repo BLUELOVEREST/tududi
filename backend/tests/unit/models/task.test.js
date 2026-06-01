@@ -130,6 +130,20 @@ describe('Task Model', () => {
             expect(task.status).toBe(0);
             expect(task.recurrence_type).toBe('none');
         });
+
+        it('should default to an atomic event type and empty Notion metadata', async () => {
+            const task = await Task.create({
+                name: 'Test Task',
+                user_id: user.id,
+            });
+
+            expect(task.event_type).toBe('atomic');
+            expect(task.notion_page_id).toBeNull();
+            expect(task.notion_url).toBeNull();
+            expect(task.notion_synced_at).toBeNull();
+            expect(task.notion_sync_status).toBeNull();
+            expect(task.notion_sync_error).toBeNull();
+        });
     });
 
     describe('optional fields', () => {
@@ -149,6 +163,16 @@ describe('Task Model', () => {
             expect(task.recurrence_interval).toBeNull();
             expect(task.recurrence_end_date).toBeNull();
             expect(task.project_id).toBeNull();
+        });
+
+        it('should accept compound event type', async () => {
+            const task = await Task.create({
+                name: 'Test Task',
+                user_id: user.id,
+                event_type: 'compound',
+            });
+
+            expect(task.event_type).toBe('compound');
         });
 
         it('should accept optional field values', async () => {

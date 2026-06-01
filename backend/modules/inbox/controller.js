@@ -84,6 +84,25 @@ const inboxController = {
     },
 
     /**
+     * PATCH /api/inbox/:uid/notion
+     * Update Notion sync metadata for an inbox item.
+     */
+    async updateNotion(req, res, next) {
+        try {
+            const userId = requireUserId(req);
+            const { uid } = req.params;
+            const item = await inboxService.updateNotionMetadata(
+                userId,
+                uid,
+                req.body
+            );
+            res.json(item);
+        } catch (error) {
+            next(error);
+        }
+    },
+
+    /**
      * DELETE /api/inbox/:uid
      * Soft delete an inbox item.
      */

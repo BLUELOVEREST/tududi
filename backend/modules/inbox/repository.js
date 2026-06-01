@@ -9,6 +9,11 @@ const PUBLIC_ATTRIBUTES = [
     'content',
     'status',
     'source',
+    'notion_page_id',
+    'notion_url',
+    'notion_synced_at',
+    'notion_sync_status',
+    'notion_sync_error',
     'created_at',
     'updated_at',
 ];

@@ -8,10 +8,16 @@ export interface Task {
     name: string;
     original_name?: string;
     status: StatusType | number;
+    event_type?: EventType;
     priority?: PriorityType | number;
     due_date?: string;
     defer_until?: string;
     note?: string;
+    notion_page_id?: string | null;
+    notion_url?: string | null;
+    notion_synced_at?: string | null;
+    notion_sync_status?: 'pending' | 'synced' | 'error' | null;
+    notion_sync_error?: string | null;
     tags?: Tag[];
     project_id?: number;
     Project?: Project;
@@ -52,6 +58,7 @@ export type StatusType =
     | 'cancelled'
     | 'planned';
 export type PriorityType = 'low' | 'medium' | 'high' | null | undefined;
+export type EventType = 'atomic' | 'compound';
 export type RecurrenceType =
     | 'none'
     | 'daily'

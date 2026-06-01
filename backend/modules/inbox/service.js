@@ -11,6 +11,9 @@ const {
 } = require('./validation');
 const { NotFoundError } = require('../../shared/errors');
 const { processInboxItem } = require('./inboxProcessingService');
+const {
+    buildNotionMetadataUpdate,
+} = require('../notion/notionMetadata');
 
 class InboxService {
     /**
@@ -102,6 +105,25 @@ class InboxService {
         if (status !== undefined && status !== null) {
             updateData.status = status;
         }
+
+        await inboxRepository.updateItem(item, updateData);
+
+        return _.pick(item, PUBLIC_ATTRIBUTES);
+    }
+
+    /**
+     * Update Notion sync metadata for an inbox item.
+     */
+    async updateNotionMetadata(userId, uid, payload) {
+        validateUid(uid);
+
+        const item = await inboxRepository.findByUid(userId, uid);
+
+        if (!item) {
+            throw new NotFoundError('Inbox item not found.');
+        }
+
+        const updateData = buildNotionMetadataUpdate(payload);
 
         await inboxRepository.updateItem(item, updateData);
 

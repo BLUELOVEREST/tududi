@@ -16,6 +16,7 @@ import { Task, PriorityType } from '../../../entities/Task';
 import { formatDateTime } from '../../../utils/dateUtils';
 import TaskStatusControl from '../TaskStatusControl';
 import { getStatusValue } from '../../../constants/taskStatus';
+import NotionLinkButton from '../../Notion/NotionLinkButton';
 
 interface TaskDetailsHeaderProps {
     task: Task;
@@ -315,6 +316,10 @@ const TaskDetailsHeader: React.FC<TaskDetailsHeaderProps> = ({
                                             showMobileVariant={false}
                                             variant="square"
                                             className="flex-shrink-0"
+                                        />
+
+                                        <NotionLinkButton
+                                            url={task.notion_url}
                                         />
 
                                         {/* Priority Dropdown Button - Next to status */}

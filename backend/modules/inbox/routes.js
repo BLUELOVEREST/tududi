@@ -11,6 +11,7 @@ router.post('/inbox', inboxController.create);
 router.post('/inbox/analyze-text', inboxController.analyzeText);
 router.get('/inbox/:uid', inboxController.getOne);
 router.patch('/inbox/:uid', inboxController.update);
+router.patch('/inbox/:uid/notion', inboxController.updateNotion);
 router.delete('/inbox/:uid', inboxController.delete);
 router.patch('/inbox/:uid/process', inboxController.process);
 

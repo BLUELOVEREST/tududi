@@ -46,9 +46,42 @@ module.exports = (sequelize) => {
                     max: 6,
                 },
             },
+            event_type: {
+                type: DataTypes.STRING,
+                allowNull: false,
+                defaultValue: 'atomic',
+                validate: {
+                    isIn: [['atomic', 'compound']],
+                },
+            },
             note: {
                 type: DataTypes.TEXT,
                 allowNull: true,
+            },
+            notion_page_id: {
+                type: DataTypes.STRING,
+                allowNull: true,
+                defaultValue: null,
+            },
+            notion_url: {
+                type: DataTypes.TEXT,
+                allowNull: true,
+                defaultValue: null,
+            },
+            notion_synced_at: {
+                type: DataTypes.DATE,
+                allowNull: true,
+                defaultValue: null,
+            },
+            notion_sync_status: {
+                type: DataTypes.STRING,
+                allowNull: true,
+                defaultValue: null,
+            },
+            notion_sync_error: {
+                type: DataTypes.TEXT,
+                allowNull: true,
+                defaultValue: null,
             },
             recurrence_type: {
                 type: DataTypes.STRING,

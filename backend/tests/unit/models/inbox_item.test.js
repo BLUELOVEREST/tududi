@@ -75,6 +75,20 @@ describe('InboxItem Model', () => {
 
             expect(inboxItem.status).toBe('added');
         });
+
+        it('should expose nullable Notion metadata fields', async () => {
+            const inboxItem = await InboxItem.create({
+                content: 'Test content',
+                source: 'test',
+                user_id: user.id,
+            });
+
+            expect(inboxItem.notion_page_id).toBeNull();
+            expect(inboxItem.notion_url).toBeNull();
+            expect(inboxItem.notion_synced_at).toBeNull();
+            expect(inboxItem.notion_sync_status).toBeNull();
+            expect(inboxItem.notion_sync_error).toBeNull();
+        });
     });
 
     describe('associations', () => {

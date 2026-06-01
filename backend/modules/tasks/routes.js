@@ -54,6 +54,9 @@ const {
     handleParentChildOnStatusChange,
 } = require('./operations/parent-child');
 const { TASK_INCLUDES_WITH_SUBTASKS } = require('./utils/constants');
+const {
+    buildNotionMetadataUpdate,
+} = require('../notion/notionMetadata');
 
 const {
     handleRecurringTasks,
@@ -870,6 +873,33 @@ router.patch('/task/:uid', requireTaskWriteAccess, async (req, res) => {
                 ? error.errors.map((e) => e.message)
                 : [error.message],
         });
+    }
+});
+
+router.patch('/task/:uid/notion', requireTaskWriteAccess, async (req, res) => {
+    try {
+        const task = await taskRepository.findByUid(req.params.uid);
+
+        if (!task) {
+            return res.status(404).json({ error: 'Task not found.' });
+        }
+
+        const updateData = buildNotionMetadataUpdate(req.body);
+        await task.update(updateData);
+
+        const taskWithAssociations = await taskRepository.findById(task.id, {
+            include: TASK_INCLUDES_WITH_SUBTASKS,
+        });
+
+        const serializedTask = await serializeTask(
+            taskWithAssociations,
+            req.currentUser.timezone,
+            { skipDisplayNameTransform: true }
+        );
+
+        res.json(serializedTask);
+    } catch (error) {
+        res.status(error.statusCode || 400).json({ error: error.message });
     }
 });
 

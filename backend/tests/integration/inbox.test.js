@@ -343,6 +343,56 @@ describe('Inbox Routes', () => {
         });
     });
 
+    describe('PATCH /api/inbox/:uid/notion', () => {
+        let inboxItem;
+
+        beforeEach(async () => {
+            inboxItem = await InboxItem.create({
+                content: 'Test content',
+                status: 'added',
+                source: 'test',
+                user_id: user.id,
+            });
+        });
+
+        it('should update Notion metadata for an inbox item', async () => {
+            const notionData = {
+                notion_page_id: 'abc123',
+                notion_url: 'https://www.notion.so/abc123',
+                notion_synced_at: '2026-05-29T00:00:00.000Z',
+                notion_sync_status: 'synced',
+                notion_sync_error: null,
+            };
+
+            const response = await agent
+                .patch(`/api/inbox/${inboxItem.uid}/notion`)
+                .send(notionData);
+
+            expect(response.status).toBe(200);
+            expect(response.body.uid).toBe(inboxItem.uid);
+            expect(response.body.notion_page_id).toBe(
+                notionData.notion_page_id
+            );
+            expect(response.body.notion_url).toBe(notionData.notion_url);
+            expect(response.body.notion_sync_status).toBe('synced');
+
+            const reloaded = await InboxItem.findByPk(inboxItem.id);
+            expect(reloaded.notion_url).toBe(notionData.notion_url);
+        });
+
+        it('should reject non-Notion URLs', async () => {
+            const response = await agent
+                .patch(`/api/inbox/${inboxItem.uid}/notion`)
+                .send({
+                    notion_url: 'https://example.com/abc123',
+                    notion_sync_status: 'synced',
+                });
+
+            expect(response.status).toBe(400);
+            expect(response.body.error).toBe('Invalid Notion URL.');
+        });
+    });
+
     describe('DELETE /api/inbox/:uid', () => {
         let inboxItem;
 

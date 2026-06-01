@@ -233,6 +233,56 @@ describe('Tasks Routes', () => {
         });
     });
 
+    describe('PATCH /api/task/:uid/notion', () => {
+        let task;
+
+        beforeEach(async () => {
+            task = await Task.create({
+                name: 'Test Task',
+                priority: 0,
+                status: 0,
+                user_id: user.id,
+            });
+        });
+
+        it('should update Notion metadata for a task', async () => {
+            const notionData = {
+                notion_page_id: 'task-page-id',
+                notion_url: 'https://www.notion.so/task-page-id',
+                notion_synced_at: '2026-05-29T00:00:00.000Z',
+                notion_sync_status: 'synced',
+                notion_sync_error: null,
+            };
+
+            const response = await agent
+                .patch(`/api/task/${task.uid}/notion`)
+                .send(notionData);
+
+            expect(response.status).toBe(200);
+            expect(response.body.uid).toBe(task.uid);
+            expect(response.body.notion_page_id).toBe(
+                notionData.notion_page_id
+            );
+            expect(response.body.notion_url).toBe(notionData.notion_url);
+            expect(response.body.notion_sync_status).toBe('synced');
+
+            const reloaded = await Task.findByPk(task.id);
+            expect(reloaded.notion_url).toBe(notionData.notion_url);
+        });
+
+        it('should reject invalid sync status', async () => {
+            const response = await agent
+                .patch(`/api/task/${task.uid}/notion`)
+                .send({
+                    notion_url: 'https://www.notion.so/task-page-id',
+                    notion_sync_status: 'complete',
+                });
+
+            expect(response.status).toBe(400);
+            expect(response.body.error).toBe('Invalid Notion sync status.');
+        });
+    });
+
     describe('DELETE /api/task/:id', () => {
         let task;
 

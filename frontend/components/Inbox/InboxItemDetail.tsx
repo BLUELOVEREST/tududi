@@ -21,6 +21,7 @@ import QuickCaptureInput, {
 } from './QuickCaptureInput';
 import InboxCard from './InboxCard';
 import { isUrl } from '../../utils/urlService';
+import NotionLinkButton from '../Notion/NotionLinkButton';
 
 interface InboxItemDetailProps {
     item: InboxItem;
@@ -706,6 +707,9 @@ const InboxItemDetail: React.FC<InboxItemDetailProps> = ({
                                 >
                                     {linkifyContent(previewText)}
                                 </button>
+                            </div>
+                            <div className="flex-shrink-0">
+                                <NotionLinkButton url={item.notion_url} />
                             </div>
                         </div>
                         {renderMetadata()}
