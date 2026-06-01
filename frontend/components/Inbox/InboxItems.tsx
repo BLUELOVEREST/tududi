@@ -218,7 +218,12 @@ const InboxItems: React.FC = () => {
         options: { inboxItemUid?: string; navigateAfterCreate?: boolean } = {}
     ) => {
         try {
-            const createdTask = await createTask(taskData);
+            const inboxUid =
+                options.inboxItemUid ?? currentConversionItemUid ?? undefined;
+            const taskPayload = inboxUid
+                ? { ...taskData, inbox_item_uid: inboxUid }
+                : taskData;
+            const createdTask = await createTask(taskPayload);
             const taskLink = (
                 <span>
                     {t('task.created', 'Task')}{' '}
@@ -232,9 +237,6 @@ const InboxItems: React.FC = () => {
                 </span>
             );
             showSuccessToast(taskLink);
-
-            const inboxUid =
-                options.inboxItemUid ?? currentConversionItemUid ?? undefined;
 
             if (inboxUid) {
                 await handleProcessItem(inboxUid, false);

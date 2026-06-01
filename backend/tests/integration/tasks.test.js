@@ -1,12 +1,22 @@
 const request = require('supertest');
+
+jest.mock('../../modules/webhooks/tgHubWebhookService', () => ({
+    emitTgHubWebhook: jest.fn(),
+}));
+
 const app = require('../../app');
 const { Task, User } = require('../../models');
 const { createTestUser } = require('../helpers/testUtils');
+const {
+    emitTgHubWebhook,
+} = require('../../modules/webhooks/tgHubWebhookService');
 
 describe('Tasks Routes', () => {
     let user, agent;
 
     beforeEach(async () => {
+        emitTgHubWebhook.mockClear();
+
         user = await createTestUser({
             email: 'test@example.com',
         });
@@ -37,6 +47,12 @@ describe('Tasks Routes', () => {
             expect(response.body.priority).toBe(taskData.priority);
             expect(response.body.status).toBe(taskData.status);
             expect(response.body.user_id).toBe(user.id);
+            expect(emitTgHubWebhook).toHaveBeenCalledWith({
+                entityType: 'task',
+                entityUid: response.body.uid,
+                eventType: 'created',
+                updatedAt: expect.any(String),
+            });
         });
 
         it('should default new tasks without status to planned', async () => {
@@ -199,6 +215,12 @@ describe('Tasks Routes', () => {
             expect(response.body.note).toBe(updateData.note);
             expect(response.body.priority).toBe(updateData.priority);
             expect(response.body.status).toBe(updateData.status);
+            expect(emitTgHubWebhook).toHaveBeenCalledWith({
+                entityType: 'task',
+                entityUid: task.uid,
+                eventType: 'updated',
+                updatedAt: expect.any(String),
+            });
         });
 
         it('should update a task to optimizing status', async () => {
@@ -316,6 +338,7 @@ describe('Tasks Routes', () => {
             expect(reloaded.notion_last_edited_time.toISOString()).toBe(
                 notionData.notion_last_edited_time
             );
+            expect(emitTgHubWebhook).not.toHaveBeenCalled();
         });
 
         it('should reject invalid sync status', async () => {

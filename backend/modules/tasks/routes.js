@@ -10,6 +10,7 @@ const {
     TaskEvent,
     RecurringCompletion,
     Project,
+    InboxItem,
     sequelize,
 } = require('../../models');
 const taskRepository = require('./repository');
@@ -55,8 +56,12 @@ const {
 } = require('./operations/parent-child');
 const { TASK_INCLUDES_WITH_SUBTASKS } = require('./utils/constants');
 const {
+    NOTION_METADATA_FIELDS,
     buildNotionMetadataUpdate,
 } = require('../notion/notionMetadata');
+const {
+    emitTgHubWebhook,
+} = require('../webhooks/tgHubWebhookService');
 
 const {
     handleRecurringTasks,
@@ -109,6 +114,48 @@ async function getRecurringParentEndDate(recurringParentId, userId) {
 
     // Return the end date (null for infinite, Date for specific end)
     return parent.recurrence_end_date;
+}
+
+function toWebhookTimestamp(value) {
+    if (!value) {
+        return new Date().toISOString();
+    }
+
+    if (value instanceof Date) {
+        return value.toISOString();
+    }
+
+    return new Date(value).toISOString();
+}
+
+async function emitTaskWebhook(task, eventType) {
+    await emitTgHubWebhook({
+        entityType: 'task',
+        entityUid: task.uid,
+        eventType,
+        updatedAt: toWebhookTimestamp(task.updated_at || task.updatedAt),
+    });
+}
+
+async function copyInboxNotionMetadata(taskAttributes, inboxItemUid, userId) {
+    if (!inboxItemUid) {
+        return;
+    }
+
+    const inboxItem = await InboxItem.findOne({
+        where: {
+            uid: inboxItemUid,
+            user_id: userId,
+        },
+    });
+
+    if (!inboxItem) {
+        return;
+    }
+
+    for (const field of NOTION_METADATA_FIELDS) {
+        taskAttributes[field] = inboxItem[field];
+    }
 }
 
 function expandRecurringTasks(
@@ -421,6 +468,11 @@ router.post('/task', async (req, res) => {
             req.currentUser.id,
             timezone
         );
+        await copyInboxNotionMetadata(
+            taskAttributes,
+            req.body.inbox_item_uid || req.body.inboxItemUid,
+            req.currentUser.id
+        );
 
         try {
             // Fetch parent end date if this is a recurring instance
@@ -463,6 +515,7 @@ router.post('/task', async (req, res) => {
         const task = await taskRepository.create(taskAttributes);
         await updateTaskTags(task, tagsData, req.currentUser.id);
         await createSubtasks(task.id, subtasks, req.currentUser.id);
+        await emitTaskWebhook(task, 'created');
 
         const taskWithAssociations = await taskRepository.findById(task.id, {
             include: TASK_INCLUDES_WITH_SUBTASKS,
@@ -853,6 +906,7 @@ router.patch('/task/:uid', requireTaskWriteAccess, async (req, res) => {
             tagsData,
             req.currentUser.id
         );
+        await emitTaskWebhook(task, 'updated');
 
         const taskWithAssociations = await taskRepository.findById(task.id, {
             include: TASK_INCLUDES_WITH_SUBTASKS,

@@ -14,6 +14,30 @@ const { processInboxItem } = require('./inboxProcessingService');
 const {
     buildNotionMetadataUpdate,
 } = require('../notion/notionMetadata');
+const {
+    emitTgHubWebhook,
+} = require('../webhooks/tgHubWebhookService');
+
+function toWebhookTimestamp(value) {
+    if (!value) {
+        return new Date().toISOString();
+    }
+
+    if (value instanceof Date) {
+        return value.toISOString();
+    }
+
+    return new Date(value).toISOString();
+}
+
+async function emitInboxWebhook(item, eventType) {
+    await emitTgHubWebhook({
+        entityType: 'inbox_item',
+        entityUid: item.uid,
+        eventType,
+        updatedAt: toWebhookTimestamp(item.updated_at || item.updatedAt),
+    });
+}
 
 class InboxService {
     /**
@@ -79,6 +103,8 @@ class InboxService {
             source: validatedSource,
         });
 
+        await emitInboxWebhook(item, 'created');
+
         return _.pick(item, PUBLIC_ATTRIBUTES);
     }
 
@@ -107,6 +133,7 @@ class InboxService {
         }
 
         await inboxRepository.updateItem(item, updateData);
+        await emitInboxWebhook(item, 'updated');
 
         return _.pick(item, PUBLIC_ATTRIBUTES);
     }
@@ -160,6 +187,7 @@ class InboxService {
         }
 
         await inboxRepository.markProcessed(item);
+        await emitInboxWebhook(item, 'processed');
 
         return _.pick(item, PUBLIC_ATTRIBUTES);
     }

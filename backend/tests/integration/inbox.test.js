@@ -1,12 +1,22 @@
 const request = require('supertest');
+
+jest.mock('../../modules/webhooks/tgHubWebhookService', () => ({
+    emitTgHubWebhook: jest.fn(),
+}));
+
 const app = require('../../app');
-const { InboxItem, User } = require('../../models');
+const { InboxItem, Task, User } = require('../../models');
 const { createTestUser } = require('../helpers/testUtils');
+const {
+    emitTgHubWebhook,
+} = require('../../modules/webhooks/tgHubWebhookService');
 
 describe('Inbox Routes', () => {
     let user, agent;
 
     beforeEach(async () => {
+        emitTgHubWebhook.mockClear();
+
         user = await createTestUser({
             email: 'test@example.com',
         });
@@ -34,6 +44,12 @@ describe('Inbox Routes', () => {
             expect(response.body.status).toBe('added');
             expect(response.body.uid).toBeDefined();
             expect(typeof response.body.uid).toBe('string');
+            expect(emitTgHubWebhook).toHaveBeenCalledWith({
+                entityType: 'inbox_item',
+                entityUid: response.body.uid,
+                eventType: 'created',
+                updatedAt: expect.any(String),
+            });
         });
 
         it('should require authentication', async () => {
@@ -320,6 +336,12 @@ describe('Inbox Routes', () => {
             expect(response.status).toBe(200);
             expect(response.body.content).toBe(updateData.content);
             expect(response.body.status).toBe(updateData.status);
+            expect(emitTgHubWebhook).toHaveBeenCalledWith({
+                entityType: 'inbox_item',
+                entityUid: inboxItem.uid,
+                eventType: 'updated',
+                updatedAt: expect.any(String),
+            });
         });
 
         it('should return 400 for invalid uid format', async () => {
@@ -392,6 +414,7 @@ describe('Inbox Routes', () => {
             expect(reloaded.notion_last_edited_time.toISOString()).toBe(
                 notionData.notion_last_edited_time
             );
+            expect(emitTgHubWebhook).not.toHaveBeenCalled();
         });
 
         it('should reject non-Notion URLs', async () => {
@@ -491,6 +514,52 @@ describe('Inbox Routes', () => {
 
             expect(response.status).toBe(200);
             expect(response.body.status).toBe('processed');
+            expect(emitTgHubWebhook).toHaveBeenCalledWith({
+                entityType: 'inbox_item',
+                entityUid: inboxItem.uid,
+                eventType: 'processed',
+                updatedAt: expect.any(String),
+            });
+        });
+
+        it('should copy Notion metadata when converting inbox item to a task', async () => {
+            await inboxItem.update({
+                notion_page_id: 'page-id',
+                notion_url: 'https://www.notion.so/example',
+                notion_synced_at: new Date('2026-06-01T00:00:00.000Z'),
+                notion_last_edited_time: new Date(
+                    '2026-06-01T00:00:01.000Z'
+                ),
+                notion_sync_status: 'synced',
+                notion_sync_error: 'old error',
+            });
+
+            const taskResponse = await agent.post('/api/task').send({
+                name: 'Task from inbox',
+                inbox_item_uid: inboxItem.uid,
+            });
+
+            expect(taskResponse.status).toBe(201);
+
+            const task = await Task.findOne({
+                where: { uid: taskResponse.body.uid },
+            });
+            expect(task.notion_page_id).toBe('page-id');
+            expect(task.notion_url).toBe('https://www.notion.so/example');
+            expect(task.notion_synced_at.toISOString()).toBe(
+                '2026-06-01T00:00:00.000Z'
+            );
+            expect(task.notion_last_edited_time.toISOString()).toBe(
+                '2026-06-01T00:00:01.000Z'
+            );
+            expect(task.notion_sync_status).toBe('synced');
+            expect(task.notion_sync_error).toBe('old error');
+            expect(emitTgHubWebhook).toHaveBeenCalledWith({
+                entityType: 'task',
+                entityUid: taskResponse.body.uid,
+                eventType: 'created',
+                updatedAt: expect.any(String),
+            });
         });
 
         it('should return 404 for non-existent inbox item', async () => {
