@@ -142,7 +142,7 @@ function buildTaskAttributes(body, userId, timezone, isUpdate = false) {
         priority: parsePriority(body.priority),
         due_date: processDueDateForStorage(dueDate, timezone),
         defer_until: processDeferUntilForStorage(body.defer_until, timezone),
-        status: parseStatus(body.status),
+        status: parseStatus(body.status, Task.STATUS.PLANNED),
         note: body.note,
         recurrence_type: recurrenceType,
         recurrence_interval: body.recurrence_interval || null,

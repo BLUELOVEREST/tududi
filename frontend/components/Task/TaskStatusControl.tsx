@@ -7,6 +7,8 @@ import {
     ClockIcon,
     XCircleIcon,
     CalendarIcon,
+    BeakerIcon,
+    Cog6ToothIcon,
     ArrowTopRightOnSquareIcon,
 } from '@heroicons/react/24/outline';
 import { useTranslation } from 'react-i18next';
@@ -193,17 +195,6 @@ const TaskStatusControl: React.FC<TaskStatusControlProps> = ({
     const renderStatusMenuOptions = (menuType: CompletionMenuTarget) => {
         const options: StatusDropdownOption[] = [
             {
-                value: 'not_started',
-                label: t('task.status.notStarted', 'Not started'),
-                Icon: PauseCircleIcon,
-                activeClasses:
-                    'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100 font-semibold border-l-2 border-gray-500 dark:border-gray-400',
-                inactiveClasses:
-                    'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800',
-                activeIconClass: 'text-gray-600 dark:text-gray-300',
-                inactiveIconClass: 'text-gray-500 dark:text-gray-400',
-            },
-            {
                 value: 'planned',
                 label: t('task.status.planned', 'Planned'),
                 Icon: ClockIcon,
@@ -216,7 +207,7 @@ const TaskStatusControl: React.FC<TaskStatusControlProps> = ({
             },
             {
                 value: 'in_progress',
-                label: t('task.status.inProgress', 'In progress'),
+                label: t('task.status.building', 'Building'),
                 Icon: PlayIcon,
                 activeClasses:
                     'bg-blue-100 dark:bg-blue-900/50 text-blue-900 dark:text-blue-100 font-semibold border-l-2 border-blue-500 dark:border-blue-400',
@@ -226,8 +217,30 @@ const TaskStatusControl: React.FC<TaskStatusControlProps> = ({
                 inactiveIconClass: 'text-blue-500 dark:text-blue-400',
             },
             {
+                value: 'validating',
+                label: t('task.status.validating', 'Validating'),
+                Icon: BeakerIcon,
+                activeClasses:
+                    'bg-cyan-100 dark:bg-cyan-900/50 text-cyan-900 dark:text-cyan-100 font-semibold border-l-2 border-cyan-500 dark:border-cyan-400',
+                inactiveClasses:
+                    'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800',
+                activeIconClass: 'text-cyan-600 dark:text-cyan-300',
+                inactiveIconClass: 'text-cyan-500 dark:text-cyan-400',
+            },
+            {
+                value: 'optimizing',
+                label: t('task.status.optimizing', 'Optimizing'),
+                Icon: Cog6ToothIcon,
+                activeClasses:
+                    'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-900 dark:text-indigo-100 font-semibold border-l-2 border-indigo-500 dark:border-indigo-400',
+                inactiveClasses:
+                    'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800',
+                activeIconClass: 'text-indigo-600 dark:text-indigo-300',
+                inactiveIconClass: 'text-indigo-500 dark:text-indigo-400',
+            },
+            {
                 value: 'waiting',
-                label: t('task.status.waiting', 'Waiting'),
+                label: t('task.status.paused', 'Paused'),
                 Icon: ClockIcon,
                 activeClasses:
                     'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-900 dark:text-yellow-100 font-semibold border-l-2 border-yellow-500 dark:border-yellow-400',
@@ -249,7 +262,7 @@ const TaskStatusControl: React.FC<TaskStatusControlProps> = ({
             },
             {
                 value: 'done',
-                label: t('task.status.setAsDone', 'Set as done'),
+                label: t('tasks.done', 'Done'),
                 Icon: CheckIcon,
                 activeClasses:
                     'bg-green-100 dark:bg-green-900/50 text-green-900 dark:text-green-100 font-semibold border-l-2 border-green-500 dark:border-green-400',
@@ -324,11 +337,19 @@ const TaskStatusControl: React.FC<TaskStatusControlProps> = ({
             Icon: CalendarIcon,
         },
         in_progress: {
-            label: t('task.status.inProgress', 'In progress'),
+            label: t('task.status.building', 'Building'),
             Icon: PlayIcon,
         },
+        validating: {
+            label: t('task.status.validating', 'Validating'),
+            Icon: BeakerIcon,
+        },
+        optimizing: {
+            label: t('task.status.optimizing', 'Optimizing'),
+            Icon: Cog6ToothIcon,
+        },
         waiting: {
-            label: t('task.status.waiting', 'Waiting'),
+            label: t('task.status.paused', 'Paused'),
             Icon: ClockIcon,
         },
         cancelled: {
@@ -376,9 +397,7 @@ const TaskStatusControl: React.FC<TaskStatusControlProps> = ({
                     title={
                         taskCompleted
                             ? t('common.undo', 'Undo')
-                            : taskInProgress
-                              ? t('tasks.inProgress', 'In Progress')
-                              : t('tasks.notStarted', 'Not Started')
+                            : completionButtonLabel
                     }
                 >
                     <CompletionIcon className={iconSizeClass} />
@@ -477,6 +496,11 @@ const TaskStatusControl: React.FC<TaskStatusControlProps> = ({
                                     : handleCompletionClick
                             }
                             className={`${completionButtonMainClasses} px-2 py-1 ${statusButtonColorClasses}`}
+                            title={
+                                taskCompleted
+                                    ? t('common.undo', 'Undo')
+                                    : completionButtonLabel
+                            }
                         >
                             <CompletionIcon className="h-3.5 w-3.5" />
                             <span className="ml-1">

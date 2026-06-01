@@ -39,6 +39,29 @@ describe('Tasks Routes', () => {
             expect(response.body.user_id).toBe(user.id);
         });
 
+        it('should default new tasks without status to planned', async () => {
+            const taskData = {
+                name: 'Task without status',
+            };
+
+            const response = await agent.post('/api/task').send(taskData);
+
+            expect(response.status).toBe(201);
+            expect(response.body.status).toBe(Task.STATUS.PLANNED);
+        });
+
+        it('should create a task with validating status', async () => {
+            const taskData = {
+                name: 'Validate workflow',
+                status: 'validating',
+            };
+
+            const response = await agent.post('/api/task').send(taskData);
+
+            expect(response.status).toBe(201);
+            expect(response.body.status).toBe(Task.STATUS.VALIDATING);
+        });
+
         it('should require authentication', async () => {
             const taskData = {
                 name: 'Test Task',
@@ -167,6 +190,15 @@ describe('Tasks Routes', () => {
             expect(response.body.note).toBe(updateData.note);
             expect(response.body.priority).toBe(updateData.priority);
             expect(response.body.status).toBe(updateData.status);
+        });
+
+        it('should update a task to optimizing status', async () => {
+            const response = await agent
+                .patch(`/api/task/${task.uid}`)
+                .send({ status: 'optimizing' });
+
+            expect(response.status).toBe(200);
+            expect(response.body.status).toBe(Task.STATUS.OPTIMIZING);
         });
 
         it('should update recurring task name without transformation', async () => {

@@ -40,10 +40,10 @@ module.exports = (sequelize) => {
             status: {
                 type: DataTypes.INTEGER,
                 allowNull: false,
-                defaultValue: 0,
+                defaultValue: 6,
                 validate: {
                     min: 0,
-                    max: 6,
+                    max: 8,
                 },
             },
             event_type: {
@@ -315,6 +315,8 @@ module.exports = (sequelize) => {
         WAITING: 4,
         CANCELLED: 5,
         PLANNED: 6,
+        VALIDATING: 7,
+        OPTIMIZING: 8,
     };
 
     Task.RECURRENCE_TYPE = {
@@ -356,6 +358,8 @@ module.exports = (sequelize) => {
             'waiting',
             'cancelled',
             'planned',
+            'validating',
+            'optimizing',
         ];
         return statuses[statusValue] || 'not_started';
     };
@@ -376,6 +380,8 @@ module.exports = (sequelize) => {
             waiting: 4,
             cancelled: 5,
             planned: 6,
+            validating: 7,
+            optimizing: 8,
         };
         return statuses[statusName] !== undefined ? statuses[statusName] : 0;
     };

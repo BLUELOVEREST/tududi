@@ -56,7 +56,9 @@ export type StatusType =
     | 'archived'
     | 'waiting'
     | 'cancelled'
-    | 'planned';
+    | 'planned'
+    | 'validating'
+    | 'optimizing';
 export type PriorityType = 'low' | 'medium' | 'high' | null | undefined;
 export type EventType = 'atomic' | 'compound';
 export type RecurrenceType =

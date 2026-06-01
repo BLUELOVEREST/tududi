@@ -8,6 +8,8 @@ export const TASK_STATUS = {
     WAITING: 4,
     CANCELLED: 5,
     PLANNED: 6,
+    VALIDATING: 7,
+    OPTIMIZING: 8,
 } as const;
 
 export const TASK_STATUS_STRINGS = {
@@ -18,6 +20,8 @@ export const TASK_STATUS_STRINGS = {
     WAITING: 'waiting',
     CANCELLED: 'cancelled',
     PLANNED: 'planned',
+    VALIDATING: 'validating',
+    OPTIMIZING: 'optimizing',
 } as const;
 
 export const HABIT_STATUS_CANCELLED = 5;
@@ -40,6 +44,8 @@ export function getStatusString(status: StatusType | number): TaskStatusString {
         'waiting',
         'cancelled',
         'planned',
+        'validating',
+        'optimizing',
     ];
 
     return statusNames[status] || 'not_started';
@@ -58,6 +64,8 @@ export function getStatusValue(status: StatusType | number): TaskStatusValue {
         waiting: TASK_STATUS.WAITING,
         cancelled: TASK_STATUS.CANCELLED,
         planned: TASK_STATUS.PLANNED,
+        validating: TASK_STATUS.VALIDATING,
+        optimizing: TASK_STATUS.OPTIMIZING,
     };
 
     return statusMap[status] ?? TASK_STATUS.NOT_STARTED;
@@ -71,9 +79,11 @@ export function getStatusLabel(status: StatusType | number): string {
         in_progress: 'In Progress',
         done: 'Completed',
         archived: 'Archived',
-        waiting: 'Waiting',
+        waiting: 'Paused',
         cancelled: 'Cancelled',
         planned: 'Planned',
+        validating: 'Validating',
+        optimizing: 'Optimizing',
     };
 
     return labels[statusString] || 'Unknown';
@@ -126,6 +136,20 @@ export function isTaskPlanned(
 ): boolean {
     if (status === undefined || status === null) return false;
     return status === TASK_STATUS.PLANNED || status === 'planned';
+}
+
+export function isTaskValidating(
+    status: StatusType | number | undefined | null
+): boolean {
+    if (status === undefined || status === null) return false;
+    return status === TASK_STATUS.VALIDATING || status === 'validating';
+}
+
+export function isTaskOptimizing(
+    status: StatusType | number | undefined | null
+): boolean {
+    if (status === undefined || status === null) return false;
+    return status === TASK_STATUS.OPTIMIZING || status === 'optimizing';
 }
 
 export function isTaskActive(

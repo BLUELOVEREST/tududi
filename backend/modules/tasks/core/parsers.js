@@ -7,7 +7,7 @@ function parsePriority(priority) {
         : priority;
 }
 
-function parseStatus(status, defaultStatus = Task.STATUS.NOT_STARTED) {
+function parseStatus(status, defaultStatus = Task.STATUS.PLANNED) {
     if (status === undefined) return defaultStatus;
     return typeof status === 'string' ? Task.getStatusValue(status) : status;
 }

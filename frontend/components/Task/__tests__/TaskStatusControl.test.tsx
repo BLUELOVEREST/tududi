@@ -1,5 +1,5 @@
 import React from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import TaskStatusControl from '../TaskStatusControl';
 import { Task } from '../../../entities/Task';
@@ -17,6 +17,46 @@ const baseTask: Task = {
 };
 
 describe('TaskStatusControl', () => {
+    it('shows workflow status options without legacy not started', () => {
+        render(
+            <TaskStatusControl task={baseTask} showMobileVariant={false} />
+        );
+
+        expect(screen.getByRole('button', { name: 'Planned' })).toHaveAttribute(
+            'title',
+            'Planned'
+        );
+
+        const menuButton = screen.getByRole('button', { expanded: false });
+        fireEvent.click(menuButton);
+        const menu = menuButton.parentElement?.nextElementSibling as HTMLElement;
+
+        expect(
+            within(menu).queryByRole('button', { name: 'Not started' })
+        ).not.toBeInTheDocument();
+        expect(
+            within(menu).getByRole('button', { name: 'Planned' })
+        ).toBeInTheDocument();
+        expect(
+            within(menu).getByRole('button', { name: 'Building' })
+        ).toBeInTheDocument();
+        expect(
+            within(menu).getByRole('button', { name: 'Validating' })
+        ).toBeInTheDocument();
+        expect(
+            within(menu).getByRole('button', { name: 'Optimizing' })
+        ).toBeInTheDocument();
+        expect(
+            within(menu).getByRole('button', { name: 'Paused' })
+        ).toBeInTheDocument();
+        expect(
+            within(menu).getByRole('button', { name: 'Cancelled' })
+        ).toBeInTheDocument();
+        expect(
+            within(menu).getByRole('button', { name: 'Done' })
+        ).toBeInTheDocument();
+    });
+
     it('renders a Notion quick action without bubbling row clicks', () => {
         const rowClick = jest.fn();
 

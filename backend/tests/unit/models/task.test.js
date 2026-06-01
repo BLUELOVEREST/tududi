@@ -23,7 +23,7 @@ describe('Task Model', () => {
             expect(task.name).toBe(taskData.name);
             expect(task.user_id).toBe(user.id);
             expect(task.priority).toBe(0);
-            expect(task.status).toBe(0);
+            expect(task.status).toBe(Task.STATUS.PLANNED);
             expect(task.recurrence_type).toBe('none');
         });
 
@@ -78,6 +78,23 @@ describe('Task Model', () => {
             expect(Task.STATUS.ARCHIVED).toBe(3);
             expect(Task.STATUS.WAITING).toBe(4);
         });
+
+        it('defines validating and optimizing workflow statuses', () => {
+            expect(Task.STATUS.VALIDATING).toBe(7);
+            expect(Task.STATUS.OPTIMIZING).toBe(8);
+            expect(Task.getStatusName(Task.STATUS.VALIDATING)).toBe(
+                'validating'
+            );
+            expect(Task.getStatusName(Task.STATUS.OPTIMIZING)).toBe(
+                'optimizing'
+            );
+            expect(Task.getStatusValue('validating')).toBe(
+                Task.STATUS.VALIDATING
+            );
+            expect(Task.getStatusValue('optimizing')).toBe(
+                Task.STATUS.OPTIMIZING
+            );
+        });
     });
 
     describe('instance methods', () => {
@@ -116,6 +133,12 @@ describe('Task Model', () => {
 
             task.status = Task.STATUS.WAITING;
             expect(Task.getStatusName(task.status)).toBe('waiting');
+
+            task.status = Task.STATUS.VALIDATING;
+            expect(Task.getStatusName(task.status)).toBe('validating');
+
+            task.status = Task.STATUS.OPTIMIZING;
+            expect(Task.getStatusName(task.status)).toBe('optimizing');
         });
     });
 
@@ -127,7 +150,7 @@ describe('Task Model', () => {
             });
 
             expect(task.priority).toBe(0);
-            expect(task.status).toBe(0);
+            expect(task.status).toBe(Task.STATUS.PLANNED);
             expect(task.recurrence_type).toBe('none');
         });
 
