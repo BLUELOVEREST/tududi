@@ -68,6 +68,9 @@ describe('Inbox Routes', () => {
                 status: 'added',
                 source: 'test',
                 user_id: user.id,
+                notion_last_edited_time: new Date(
+                    '2026-06-01T00:00:01.000Z'
+                ),
             });
 
             inboxItem2 = await InboxItem.create({
@@ -94,6 +97,9 @@ describe('Inbox Routes', () => {
             expect(response.body.length).toBe(1);
             expect(response.body[0].uid).toBe(inboxItem1.uid);
             expect(response.body[0].status).toBe('added');
+            expect(response.body[0].notion_last_edited_time).toBe(
+                '2026-06-01T00:00:01.000Z'
+            );
         });
 
         it('should return inbox items ordered by created_at DESC (newest first)', async () => {
@@ -241,6 +247,7 @@ describe('Inbox Routes', () => {
             expect(response.status).toBe(200);
             expect(response.body.uid).toBe(inboxItem.uid);
             expect(response.body.content).toBe(inboxItem.content);
+            expect(response.body).toHaveProperty('notion_last_edited_time');
         });
 
         it('should return 400 for invalid uid format', async () => {
@@ -357,9 +364,10 @@ describe('Inbox Routes', () => {
 
         it('should update Notion metadata for an inbox item', async () => {
             const notionData = {
-                notion_page_id: 'abc123',
-                notion_url: 'https://www.notion.so/abc123',
-                notion_synced_at: '2026-05-29T00:00:00.000Z',
+                notion_page_id: 'page-id',
+                notion_url: 'https://www.notion.so/example',
+                notion_synced_at: '2026-06-01T00:00:00.000Z',
+                notion_last_edited_time: '2026-06-01T00:00:01.000Z',
                 notion_sync_status: 'synced',
                 notion_sync_error: null,
             };
@@ -374,10 +382,16 @@ describe('Inbox Routes', () => {
                 notionData.notion_page_id
             );
             expect(response.body.notion_url).toBe(notionData.notion_url);
+            expect(response.body.notion_last_edited_time).toBe(
+                notionData.notion_last_edited_time
+            );
             expect(response.body.notion_sync_status).toBe('synced');
 
             const reloaded = await InboxItem.findByPk(inboxItem.id);
             expect(reloaded.notion_url).toBe(notionData.notion_url);
+            expect(reloaded.notion_last_edited_time.toISOString()).toBe(
+                notionData.notion_last_edited_time
+            );
         });
 
         it('should reject non-Notion URLs', async () => {
@@ -390,6 +404,20 @@ describe('Inbox Routes', () => {
 
             expect(response.status).toBe(400);
             expect(response.body.error).toBe('Invalid Notion URL.');
+        });
+
+        it('should reject invalid Notion last edited time', async () => {
+            const response = await agent
+                .patch(`/api/inbox/${inboxItem.uid}/notion`)
+                .send({
+                    notion_last_edited_time: 'not-a-date',
+                });
+
+            expect(response.status).toBe(400);
+            expect(response.body.error).toBe('Invalid Notion last edited time.');
+
+            const reloaded = await InboxItem.findByPk(inboxItem.id);
+            expect(reloaded.notion_last_edited_time).toBeNull();
         });
     });
 

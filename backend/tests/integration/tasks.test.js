@@ -122,6 +122,9 @@ describe('Tasks Routes', () => {
                 name: 'Task 1',
                 user_id: user.id,
                 status: Task.STATUS.IN_PROGRESS, // Active status shows in today view
+                notion_last_edited_time: new Date(
+                    '2026-06-01T00:00:01.000Z'
+                ),
             });
 
             task2 = await Task.create({
@@ -139,6 +142,12 @@ describe('Tasks Routes', () => {
             expect(response.body.tasks.length).toBe(2);
             expect(response.body.tasks.map((t) => t.id)).toContain(task1.id);
             expect(response.body.tasks.map((t) => t.id)).toContain(task2.id);
+            const serializedTask = response.body.tasks.find(
+                (t) => t.id === task1.id
+            );
+            expect(serializedTask.notion_last_edited_time).toBe(
+                '2026-06-01T00:00:01.000Z'
+            );
         });
 
         it('should filter today tasks (returns tasks with active status)', async () => {
@@ -279,9 +288,10 @@ describe('Tasks Routes', () => {
 
         it('should update Notion metadata for a task', async () => {
             const notionData = {
-                notion_page_id: 'task-page-id',
-                notion_url: 'https://www.notion.so/task-page-id',
-                notion_synced_at: '2026-05-29T00:00:00.000Z',
+                notion_page_id: 'page-id',
+                notion_url: 'https://www.notion.so/example',
+                notion_synced_at: '2026-06-01T00:00:00.000Z',
+                notion_last_edited_time: '2026-06-01T00:00:01.000Z',
                 notion_sync_status: 'synced',
                 notion_sync_error: null,
             };
@@ -296,10 +306,16 @@ describe('Tasks Routes', () => {
                 notionData.notion_page_id
             );
             expect(response.body.notion_url).toBe(notionData.notion_url);
+            expect(response.body.notion_last_edited_time).toBe(
+                notionData.notion_last_edited_time
+            );
             expect(response.body.notion_sync_status).toBe('synced');
 
             const reloaded = await Task.findByPk(task.id);
             expect(reloaded.notion_url).toBe(notionData.notion_url);
+            expect(reloaded.notion_last_edited_time.toISOString()).toBe(
+                notionData.notion_last_edited_time
+            );
         });
 
         it('should reject invalid sync status', async () => {
@@ -312,6 +328,20 @@ describe('Tasks Routes', () => {
 
             expect(response.status).toBe(400);
             expect(response.body.error).toBe('Invalid Notion sync status.');
+        });
+
+        it('should reject invalid Notion last edited time', async () => {
+            const response = await agent
+                .patch(`/api/task/${task.uid}/notion`)
+                .send({
+                    notion_last_edited_time: 'not-a-date',
+                });
+
+            expect(response.status).toBe(400);
+            expect(response.body.error).toBe('Invalid Notion last edited time.');
+
+            const reloaded = await Task.findByPk(task.id);
+            expect(reloaded.notion_last_edited_time).toBeNull();
         });
     });
 

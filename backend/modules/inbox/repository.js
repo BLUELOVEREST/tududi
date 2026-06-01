@@ -12,6 +12,7 @@ const PUBLIC_ATTRIBUTES = [
     'notion_page_id',
     'notion_url',
     'notion_synced_at',
+    'notion_last_edited_time',
     'notion_sync_status',
     'notion_sync_error',
     'created_at',

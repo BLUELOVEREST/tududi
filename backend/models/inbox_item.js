@@ -76,6 +76,11 @@ module.exports = (sequelize) => {
                 allowNull: true,
                 defaultValue: null,
             },
+            notion_last_edited_time: {
+                type: DataTypes.DATE,
+                allowNull: true,
+                defaultValue: null,
+            },
             notion_sync_status: {
                 type: DataTypes.STRING,
                 allowNull: true,

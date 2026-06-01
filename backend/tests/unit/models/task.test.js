@@ -164,6 +164,7 @@ describe('Task Model', () => {
             expect(task.notion_page_id).toBeNull();
             expect(task.notion_url).toBeNull();
             expect(task.notion_synced_at).toBeNull();
+            expect(task.notion_last_edited_time).toBeNull();
             expect(task.notion_sync_status).toBeNull();
             expect(task.notion_sync_error).toBeNull();
         });
@@ -213,6 +214,18 @@ describe('Task Model', () => {
             expect(task.priority).toBe(Task.PRIORITY.HIGH);
             expect(task.status).toBe(Task.STATUS.IN_PROGRESS);
             expect(task.note).toBe('Test Note');
+        });
+
+        it('should store Notion last edited time', async () => {
+            const lastEditedTime = new Date('2026-06-01T00:00:01.000Z');
+
+            const task = await Task.create({
+                name: 'Test Task',
+                user_id: user.id,
+                notion_last_edited_time: lastEditedTime,
+            });
+
+            expect(task.notion_last_edited_time).toEqual(lastEditedTime);
         });
     });
 });

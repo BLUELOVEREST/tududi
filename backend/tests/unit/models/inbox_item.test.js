@@ -86,8 +86,24 @@ describe('InboxItem Model', () => {
             expect(inboxItem.notion_page_id).toBeNull();
             expect(inboxItem.notion_url).toBeNull();
             expect(inboxItem.notion_synced_at).toBeNull();
+            expect(inboxItem.notion_last_edited_time).toBeNull();
             expect(inboxItem.notion_sync_status).toBeNull();
             expect(inboxItem.notion_sync_error).toBeNull();
+        });
+    });
+
+    describe('optional fields', () => {
+        it('should store Notion last edited time', async () => {
+            const lastEditedTime = new Date('2026-06-01T00:00:01.000Z');
+
+            const inboxItem = await InboxItem.create({
+                content: 'Test content',
+                source: 'test',
+                user_id: user.id,
+                notion_last_edited_time: lastEditedTime,
+            });
+
+            expect(inboxItem.notion_last_edited_time).toEqual(lastEditedTime);
         });
     });
 

@@ -6,6 +6,7 @@ const NOTION_METADATA_FIELDS = [
     'notion_page_id',
     'notion_url',
     'notion_synced_at',
+    'notion_last_edited_time',
     'notion_sync_status',
     'notion_sync_error',
 ];
@@ -48,6 +49,17 @@ function buildNotionMetadataUpdate(body = {}) {
             throw new ValidationError('Invalid Notion sync timestamp.');
         }
         update.notion_synced_at = syncedAt;
+    }
+
+    if (
+        update.notion_last_edited_time !== undefined &&
+        update.notion_last_edited_time !== null
+    ) {
+        const lastEditedTime = new Date(update.notion_last_edited_time);
+        if (Number.isNaN(lastEditedTime.getTime())) {
+            throw new ValidationError('Invalid Notion last edited time.');
+        }
+        update.notion_last_edited_time = lastEditedTime;
     }
 
     return update;
