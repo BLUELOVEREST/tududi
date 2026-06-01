@@ -7,6 +7,7 @@ import {
     ClockIcon,
     XCircleIcon,
     CalendarIcon,
+    ArrowTopRightOnSquareIcon,
 } from '@heroicons/react/24/outline';
 import { useTranslation } from 'react-i18next';
 import { Task, StatusType } from '../../entities/Task';
@@ -32,6 +33,7 @@ interface TaskStatusControlProps {
     className?: string;
     variant?: 'pill' | 'square';
     showQuickActions?: boolean;
+    showNotionQuickAction?: boolean;
     onMenuOpenChange?: (isOpen: boolean) => void;
 }
 
@@ -51,6 +53,7 @@ const TaskStatusControl: React.FC<TaskStatusControlProps> = ({
     className = '',
     variant = 'square',
     showQuickActions = true,
+    showNotionQuickAction = false,
     onMenuOpenChange,
 }) => {
     const { t } = useTranslation();
@@ -141,6 +144,7 @@ const TaskStatusControl: React.FC<TaskStatusControlProps> = ({
         showQuickActions && quickStartStatuses.has(currentStatusString);
     const showQuickCompleteButton =
         showQuickActions && currentStatusString !== 'done';
+    const showNotionButton = showNotionQuickAction && !!task.notion_url;
 
     const handleCompletionClick = async (e: React.MouseEvent) => {
         e.preventDefault();
@@ -179,6 +183,11 @@ const TaskStatusControl: React.FC<TaskStatusControlProps> = ({
             };
             await onTaskUpdate(updatedTask);
         }
+    };
+
+    const handleNotionClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+        e.stopPropagation();
+        setCompletionMenuOpen(null);
     };
 
     const renderStatusMenuOptions = (menuType: CompletionMenuTarget) => {
@@ -404,6 +413,24 @@ const TaskStatusControl: React.FC<TaskStatusControlProps> = ({
                         />
                     </button>
                 )}
+                {showNotionButton && (
+                    <a
+                        href={task.notion_url!}
+                        target="_blank"
+                        rel="noreferrer"
+                        onClick={handleNotionClick}
+                        className={quickButtonClasses}
+                        title={t('notion.openInNotion', 'Open in Notion')}
+                        aria-label={t(
+                            'notion.openInNotion',
+                            'Open in Notion'
+                        )}
+                    >
+                        <ArrowTopRightOnSquareIcon
+                            className={iconSizeClass}
+                        />
+                    </a>
+                )}
                 <button
                     type="button"
                     onClick={(e) => {
@@ -490,6 +517,25 @@ const TaskStatusControl: React.FC<TaskStatusControlProps> = ({
                                     className={`h-3.5 w-3.5 transition-all duration-300 ${isCompletingTask ? 'scale-125 text-green-600 dark:text-green-400' : ''}`}
                                 />
                             </button>
+                        )}
+                        {showNotionButton && (
+                            <a
+                                href={task.notion_url!}
+                                target="_blank"
+                                rel="noreferrer"
+                                onClick={handleNotionClick}
+                                className={`${completionButtonChevronClasses} ${statusButtonColorClasses} px-2 border-l ${statusBorderColorClass}`}
+                                title={t(
+                                    'notion.openInNotion',
+                                    'Open in Notion'
+                                )}
+                                aria-label={t(
+                                    'notion.openInNotion',
+                                    'Open in Notion'
+                                )}
+                            >
+                                <ArrowTopRightOnSquareIcon className="h-3.5 w-3.5" />
+                            </a>
                         )}
                         <button
                             type="button"

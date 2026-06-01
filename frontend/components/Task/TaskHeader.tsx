@@ -458,6 +458,7 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
                             onTaskUpdate={onTaskUpdate}
                             showMobileVariant={false}
                             className=""
+                            showNotionQuickAction={!!task.notion_url}
                             onMenuOpenChange={onMenuOpenChange}
                         />
                     </div>
@@ -637,6 +638,7 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
                                     onTaskUpdate={onTaskUpdate}
                                     hoverRevealQuickActions={false}
                                     showMobileVariant={false}
+                                    showNotionQuickAction={!!task.notion_url}
                                     onMenuOpenChange={onMenuOpenChange}
                                 />
                             </div>
