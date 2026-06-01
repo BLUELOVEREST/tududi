@@ -26,8 +26,14 @@ const inboxController = {
     async list(req, res, next) {
         try {
             const userId = requireUserId(req);
-            const { limit, offset } = req.query;
-            const result = await inboxService.getAll(userId, { limit, offset });
+            const { limit, offset, notion_page_id, notion_sync_status } =
+                req.query;
+            const result = await inboxService.getAll(userId, {
+                limit,
+                offset,
+                notion_page_id,
+                notion_sync_status,
+            });
             res.json(result);
         } catch (error) {
             next(error);

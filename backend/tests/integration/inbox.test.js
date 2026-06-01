@@ -84,9 +84,7 @@ describe('Inbox Routes', () => {
                 status: 'added',
                 source: 'test',
                 user_id: user.id,
-                notion_last_edited_time: new Date(
-                    '2026-06-01T00:00:01.000Z'
-                ),
+                notion_last_edited_time: new Date('2026-06-01T00:00:01.000Z'),
             });
 
             inboxItem2 = await InboxItem.create({
@@ -116,6 +114,34 @@ describe('Inbox Routes', () => {
             expect(response.body[0].notion_last_edited_time).toBe(
                 '2026-06-01T00:00:01.000Z'
             );
+        });
+
+        it('should filter inbox items by Notion page id regardless of status', async () => {
+            await inboxItem1.update({ notion_page_id: 'page-id-1' });
+            await inboxItem2.update({ notion_page_id: 'page-id-2' });
+
+            const response = await agent.get(
+                '/api/inbox?notion_page_id=page-id-2'
+            );
+
+            expect(response.status).toBe(200);
+            expect(response.body.map((item) => item.uid)).toEqual([
+                inboxItem2.uid,
+            ]);
+        });
+
+        it('should filter inbox items by Notion sync status regardless of status', async () => {
+            await inboxItem1.update({ notion_sync_status: 'synced' });
+            await inboxItem2.update({ notion_sync_status: 'error' });
+
+            const response = await agent.get(
+                '/api/inbox?notion_sync_status=error'
+            );
+
+            expect(response.status).toBe(200);
+            expect(response.body.map((item) => item.uid)).toEqual([
+                inboxItem2.uid,
+            ]);
         });
 
         it('should return inbox items ordered by created_at DESC (newest first)', async () => {
@@ -437,7 +463,9 @@ describe('Inbox Routes', () => {
                 });
 
             expect(response.status).toBe(400);
-            expect(response.body.error).toBe('Invalid Notion last edited time.');
+            expect(response.body.error).toBe(
+                'Invalid Notion last edited time.'
+            );
 
             const reloaded = await InboxItem.findByPk(inboxItem.id);
             expect(reloaded.notion_last_edited_time).toBeNull();
@@ -527,9 +555,7 @@ describe('Inbox Routes', () => {
                 notion_page_id: 'page-id',
                 notion_url: 'https://www.notion.so/example',
                 notion_synced_at: new Date('2026-06-01T00:00:00.000Z'),
-                notion_last_edited_time: new Date(
-                    '2026-06-01T00:00:01.000Z'
-                ),
+                notion_last_edited_time: new Date('2026-06-01T00:00:01.000Z'),
                 notion_sync_status: 'synced',
                 notion_sync_error: 'old error',
             });

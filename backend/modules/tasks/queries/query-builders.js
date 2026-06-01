@@ -333,6 +333,14 @@ async function filterTasksByParams(
         whereClause.priority = Task.getPriorityValue(params.priority);
     }
 
+    if (params.notion_page_id) {
+        whereClause.notion_page_id = params.notion_page_id;
+    }
+
+    if (params.notion_sync_status) {
+        whereClause.notion_sync_status = params.notion_sync_status;
+    }
+
     let orderClause = [['created_at', 'DESC']];
 
     if (params.type === 'inbox') {

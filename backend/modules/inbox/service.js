@@ -11,12 +11,8 @@ const {
 } = require('./validation');
 const { NotFoundError } = require('../../shared/errors');
 const { processInboxItem } = require('./inboxProcessingService');
-const {
-    buildNotionMetadataUpdate,
-} = require('../notion/notionMetadata');
-const {
-    emitTgHubWebhook,
-} = require('../webhooks/tgHubWebhookService');
+const { buildNotionMetadataUpdate } = require('../notion/notionMetadata');
+const { emitTgHubWebhook } = require('../webhooks/tgHubWebhookService');
 
 function toWebhookTimestamp(value) {
     if (!value) {
@@ -44,8 +40,12 @@ class InboxService {
      * Get all active inbox items for a user.
      * Supports pagination if limit/offset provided.
      */
-    async getAll(userId, { limit, offset } = {}) {
+    async getAll(
+        userId,
+        { limit, offset, notion_page_id, notion_sync_status } = {}
+    ) {
         const hasPagination = limit !== undefined || offset !== undefined;
+        const filters = { notion_page_id, notion_sync_status };
 
         if (hasPagination) {
             const parsedLimit = parseInt(limit, 10) || 20;
@@ -55,8 +55,9 @@ class InboxService {
                 inboxRepository.findAllActive(userId, {
                     limit: parsedLimit,
                     offset: parsedOffset,
+                    ...filters,
                 }),
-                inboxRepository.countActive(userId),
+                inboxRepository.countActive(userId, filters),
             ]);
 
             return {
@@ -71,7 +72,7 @@ class InboxService {
         }
 
         // Return simple array for backward compatibility
-        return inboxRepository.findAllActive(userId);
+        return inboxRepository.findAllActive(userId, filters);
     }
 
     /**

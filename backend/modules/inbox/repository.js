@@ -27,12 +27,28 @@ class InboxRepository extends BaseRepository {
     /**
      * Find all active inbox items for a user (status = 'added').
      */
-    async findAllActive(userId, { limit, offset } = {}) {
+    async findAllActive(
+        userId,
+        { limit, offset, notion_page_id, notion_sync_status } = {}
+    ) {
+        const where = {
+            user_id: userId,
+        };
+
+        if (notion_page_id) {
+            where.notion_page_id = notion_page_id;
+        }
+
+        if (notion_sync_status) {
+            where.notion_sync_status = notion_sync_status;
+        }
+
+        if (!notion_page_id && !notion_sync_status) {
+            where.status = 'added';
+        }
+
         const options = {
-            where: {
-                user_id: userId,
-                status: 'added',
-            },
+            where,
             order: [['created_at', 'DESC']],
         };
 
@@ -47,12 +63,25 @@ class InboxRepository extends BaseRepository {
     /**
      * Count active inbox items for a user.
      */
-    async countActive(userId) {
+    async countActive(userId, { notion_page_id, notion_sync_status } = {}) {
+        const where = {
+            user_id: userId,
+        };
+
+        if (notion_page_id) {
+            where.notion_page_id = notion_page_id;
+        }
+
+        if (notion_sync_status) {
+            where.notion_sync_status = notion_sync_status;
+        }
+
+        if (!notion_page_id && !notion_sync_status) {
+            where.status = 'added';
+        }
+
         return this.model.count({
-            where: {
-                user_id: userId,
-                status: 'added',
-            },
+            where,
             raw: true,
         });
     }

@@ -138,9 +138,7 @@ describe('Tasks Routes', () => {
                 name: 'Task 1',
                 user_id: user.id,
                 status: Task.STATUS.IN_PROGRESS, // Active status shows in today view
-                notion_last_edited_time: new Date(
-                    '2026-06-01T00:00:01.000Z'
-                ),
+                notion_last_edited_time: new Date('2026-06-01T00:00:01.000Z'),
             });
 
             task2 = await Task.create({
@@ -173,6 +171,34 @@ describe('Tasks Routes', () => {
             expect(response.body.tasks).toBeDefined();
             expect(response.body.tasks.length).toBe(1);
             expect(response.body.tasks[0].id).toBe(task1.id);
+        });
+
+        it('should filter tasks by Notion page id', async () => {
+            await task1.update({ notion_page_id: 'page-id-1' });
+            await task2.update({ notion_page_id: 'page-id-2' });
+
+            const response = await agent.get(
+                '/api/tasks?notion_page_id=page-id-1'
+            );
+
+            expect(response.status).toBe(200);
+            expect(response.body.tasks.map((task) => task.uid)).toEqual([
+                task1.uid,
+            ]);
+        });
+
+        it('should filter tasks by Notion sync status', async () => {
+            await task1.update({ notion_sync_status: 'error' });
+            await task2.update({ notion_sync_status: 'synced' });
+
+            const response = await agent.get(
+                '/api/tasks?notion_sync_status=error'
+            );
+
+            expect(response.status).toBe(200);
+            expect(response.body.tasks.map((task) => task.uid)).toEqual([
+                task1.uid,
+            ]);
         });
 
         it('should require authentication', async () => {
@@ -361,7 +387,9 @@ describe('Tasks Routes', () => {
                 });
 
             expect(response.status).toBe(400);
-            expect(response.body.error).toBe('Invalid Notion last edited time.');
+            expect(response.body.error).toBe(
+                'Invalid Notion last edited time.'
+            );
 
             const reloaded = await Task.findByPk(task.id);
             expect(reloaded.notion_last_edited_time).toBeNull();
