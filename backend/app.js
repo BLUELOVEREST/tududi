@@ -62,7 +62,21 @@ app.use(
                 : false,
     })
 );
-app.use(compression());
+app.use(
+    compression({
+        filter: (req, res) => {
+            if (
+                req.path.startsWith('/caldav/') ||
+                req.path.startsWith('/.well-known/caldav') ||
+                (req.method === 'PROPFIND' &&
+                    (req.path === '/' || req.path === '/principals/'))
+            ) {
+                return false;
+            }
+            return compression.filter(req, res);
+        },
+    })
+);
 app.use(morgan('combined'));
 
 // CORS configuration
