@@ -222,6 +222,7 @@ const habitsModule = require('./modules/habits');
 const inboxModule = require('./modules/inbox');
 const notesModule = require('./modules/notes');
 const notificationsModule = require('./modules/notifications');
+const notionSyncModule = require('./modules/notion-sync');
 const projectsModule = require('./modules/projects');
 const quotesModule = require('./modules/quotes');
 const searchModule = require('./modules/search');
@@ -316,6 +317,7 @@ const registerApiRoutes = (basePath) => {
     app.use(basePath, searchModule.routes);
     app.use(basePath, viewsModule.routes);
     app.use(basePath, notificationsModule.routes);
+    app.use(basePath, notionSyncModule.routes);
     app.use(basePath, mcpModule.routes);
 };
 

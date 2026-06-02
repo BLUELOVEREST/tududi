@@ -6,7 +6,11 @@ import {
     BoltIcon,
     InboxIcon,
 } from '@heroicons/react/24/solid';
-import { EnvelopeIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import {
+    ArrowPathIcon,
+    EnvelopeIcon,
+    MagnifyingGlassIcon,
+} from '@heroicons/react/24/outline';
 import { useTranslation } from 'react-i18next';
 import PomodoroTimer from './Shared/PomodoroTimer';
 import UniversalSearch from './UniversalSearch/UniversalSearch';
@@ -14,6 +18,11 @@ import NotificationsDropdown from './Notifications/NotificationsDropdown';
 import { getApiPath, getAssetPath } from '../config/paths';
 import { getFeatureFlags, FeatureFlags } from '../utils/featureFlags';
 import { setUserTimezone } from '../utils/dateUtils';
+import { useToast } from './Shared/ToastContext';
+import {
+    backfillNotionEvents,
+    NotionBackfillResult,
+} from '../utils/notionSyncService';
 
 interface NavbarProps {
     isDarkMode: boolean;
@@ -36,7 +45,13 @@ const Navbar: React.FC<NavbarProps> = ({
     isDarkMode,
 }) => {
     const { t } = useTranslation();
+    const { showSuccessToast, showErrorToast } = useToast();
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [isSyncPanelOpen, setIsSyncPanelOpen] = useState(false);
+    const [isSyncing, setIsSyncing] = useState(false);
+    const [syncResult, setSyncResult] = useState<NotionBackfillResult | null>(
+        null
+    );
     const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
     const [pomodoroEnabled, setPomodoroEnabled] = useState(true); // Default to true
     const [featureFlags, setFeatureFlags] = useState<FeatureFlags>({
@@ -47,6 +62,7 @@ const Navbar: React.FC<NavbarProps> = ({
         mcp: false,
     });
     const dropdownRef = useRef<HTMLDivElement>(null);
+    const syncPanelRef = useRef<HTMLDivElement>(null);
     const navigate = useNavigate();
 
     // Dispatch event when mobile search state changes
@@ -81,6 +97,12 @@ const Navbar: React.FC<NavbarProps> = ({
                 !dropdownRef.current.contains(event.target as Node)
             ) {
                 setIsDropdownOpen(false);
+            }
+            if (
+                syncPanelRef.current &&
+                !syncPanelRef.current.contains(event.target as Node)
+            ) {
+                setIsSyncPanelOpen(false);
             }
         };
         document.addEventListener('mousedown', handleClickOutside);
@@ -162,6 +184,41 @@ const Navbar: React.FC<NavbarProps> = ({
         }
     };
 
+    const formatSyncResult = (result: NotionBackfillResult) =>
+        `Total ${result.total}, synced ${result.synced}, skipped ${result.skipped}, errors ${result.errors.length}`;
+
+    const handleNotionBackfill = async (dryRun: boolean) => {
+        setIsSyncing(true);
+        try {
+            const result = await backfillNotionEvents({
+                limit: 200,
+                dryRun,
+            });
+            setSyncResult(result);
+
+            if (dryRun) {
+                showSuccessToast(
+                    `Notion dry run complete. ${formatSyncResult(result)}`
+                );
+                return;
+            }
+
+            showSuccessToast(
+                `Notion sync complete. ${formatSyncResult(result)}`
+            );
+            window.dispatchEvent(new CustomEvent('forceInboxReload'));
+            window.dispatchEvent(new CustomEvent('notionBackfillCompleted'));
+        } catch (error) {
+            const message =
+                error instanceof Error
+                    ? error.message
+                    : 'Failed to sync Notion events.';
+            showErrorToast(message);
+        } finally {
+            setIsSyncing(false);
+        }
+    };
+
     return (
         <nav className="fixed top-0 left-0 right-0 z-50 bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-md">
             {/* Main navbar row */}
@@ -229,6 +286,83 @@ const Navbar: React.FC<NavbarProps> = ({
                     {pomodoroEnabled && <PomodoroTimer />}
 
                     <NotificationsDropdown isDarkMode={isDarkMode} />
+
+                    <div className="relative" ref={syncPanelRef}>
+                        <button
+                            onClick={() =>
+                                setIsSyncPanelOpen((value) => !value)
+                            }
+                            className={`flex items-center rounded-full focus:outline-none transition-all duration-200 p-2 ${
+                                isSyncPanelOpen
+                                    ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-200'
+                                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+                            }`}
+                            aria-label="Sync Notion"
+                            title="Sync Notion"
+                        >
+                            <ArrowPathIcon
+                                className={`h-5 w-5 ${isSyncing ? 'animate-spin' : ''}`}
+                            />
+                        </button>
+
+                        {isSyncPanelOpen && (
+                            <div className="absolute right-0 top-full mt-2 w-80 max-w-[calc(100vw-2rem)] bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700 p-4 text-gray-900 dark:text-gray-100">
+                                <div className="mb-3">
+                                    <div className="text-sm font-semibold">
+                                        {t('notionSync.title', 'Sync Notion')}
+                                    </div>
+                                    <div className="mt-1 text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+                                        {t(
+                                            'notionSync.description',
+                                            'Backfill Notion events into Tududi inbox and tasks.'
+                                        )}
+                                    </div>
+                                </div>
+
+                                {syncResult && (
+                                    <div className="mb-3 rounded-md bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 px-3 py-2 text-xs text-gray-600 dark:text-gray-300 space-y-1">
+                                        <div>
+                                            Total {syncResult.total} · Synced{' '}
+                                            {syncResult.synced} · Skipped{' '}
+                                            {syncResult.skipped}
+                                        </div>
+                                        {syncResult.errors.length > 0 && (
+                                            <div className="text-red-600 dark:text-red-300">
+                                                Errors:{' '}
+                                                {syncResult.errors.length}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                <div className="flex items-center justify-end gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            handleNotionBackfill(true)
+                                        }
+                                        disabled={isSyncing}
+                                        className="px-3 py-2 text-sm font-medium rounded-md border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        {t('notionSync.dryRun', 'Dry run')}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            handleNotionBackfill(false)
+                                        }
+                                        disabled={isSyncing}
+                                        className="inline-flex items-center px-3 py-2 text-sm font-medium rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        {isSyncing && (
+                                            <ArrowPathIcon className="mr-2 h-4 w-4 animate-spin" />
+                                        )}
+                                        {t('notionSync.syncNow', 'Sync now')}
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
 
                     <div className="relative" ref={dropdownRef}>
                         <button

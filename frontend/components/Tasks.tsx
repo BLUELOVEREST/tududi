@@ -333,18 +333,41 @@ const Tasks: React.FC = () => {
                 setTotalCount((prevCount) => prevCount + 1);
             }
         };
+        const handleNotionBackfillCompleted = () => {
+            const shouldDisablePagination =
+                isUpcomingView || groupBy === 'project';
+            fetchData(
+                true,
+                shouldDisablePagination
+                    ? {
+                          disablePagination: true,
+                          disableHasMore: true,
+                          limitOverride: 10000,
+                          forceOffset: 0,
+                      }
+                    : undefined
+            );
+        };
 
         window.addEventListener(
             'taskCreated',
             handleTaskCreated as EventListener
+        );
+        window.addEventListener(
+            'notionBackfillCompleted',
+            handleNotionBackfillCompleted
         );
         return () => {
             window.removeEventListener(
                 'taskCreated',
                 handleTaskCreated as EventListener
             );
+            window.removeEventListener(
+                'notionBackfillCompleted',
+                handleNotionBackfillCompleted
+            );
         };
-    }, []);
+    }, [isUpcomingView, groupBy, location]);
 
     const handleRemoveTag = () => {
         const params = new URLSearchParams(location.search);
