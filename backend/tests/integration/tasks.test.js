@@ -55,6 +55,20 @@ describe('Tasks Routes', () => {
             });
         });
 
+        it('should skip webhook when create comes from tg-hub sync', async () => {
+            const response = await agent
+                .post('/api/task')
+                .set('X-Sync-Origin', 'tg-hub')
+                .send({
+                    name: 'Created from Notion',
+                    status: 'planned',
+                });
+
+            expect(response.status).toBe(201);
+            expect(response.body.name).toBe('Created from Notion');
+            expect(emitTgHubWebhook).not.toHaveBeenCalled();
+        });
+
         it('should default new tasks without status to planned', async () => {
             const taskData = {
                 name: 'Task without status',

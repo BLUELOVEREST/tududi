@@ -523,7 +523,9 @@ router.post('/task', async (req, res) => {
         const task = await taskRepository.create(taskAttributes);
         await updateTaskTags(task, tagsData, req.currentUser.id);
         await createSubtasks(task.id, subtasks, req.currentUser.id);
-        await emitTaskWebhook(task, 'created');
+        if (!isTgHubSyncRequest(req)) {
+            await emitTaskWebhook(task, 'created');
+        }
 
         const taskWithAssociations = await taskRepository.findById(task.id, {
             include: TASK_INCLUDES_WITH_SUBTASKS,

@@ -99,7 +99,7 @@ class InboxService {
     /**
      * Create a new inbox item.
      */
-    async create(userId, { content, source }) {
+    async create(userId, { content, source, suppressWebhook = false }) {
         const validatedContent = validateContent(content);
         const validatedSource = validateSource(source);
         const title = buildTitleFromContent(validatedContent);
@@ -110,7 +110,9 @@ class InboxService {
             source: validatedSource,
         });
 
-        await emitInboxWebhook(item, 'created');
+        if (!suppressWebhook) {
+            await emitInboxWebhook(item, 'created');
+        }
 
         return _.pick(item, PUBLIC_ATTRIBUTES);
     }

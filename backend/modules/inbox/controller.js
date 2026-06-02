@@ -67,7 +67,11 @@ const inboxController = {
         try {
             const userId = requireUserId(req);
             const { content, source } = req.body;
-            const item = await inboxService.create(userId, { content, source });
+            const item = await inboxService.create(userId, {
+                content,
+                source,
+                suppressWebhook: isTgHubSyncRequest(req),
+            });
             res.status(201).json(item);
         } catch (error) {
             next(error);

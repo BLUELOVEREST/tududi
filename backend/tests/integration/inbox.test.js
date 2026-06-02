@@ -52,6 +52,20 @@ describe('Inbox Routes', () => {
             });
         });
 
+        it('should skip webhook when create comes from tg-hub sync', async () => {
+            const response = await agent
+                .post('/api/inbox')
+                .set('X-Sync-Origin', 'tg-hub')
+                .send({
+                    content: 'Created from Notion',
+                    source: 'notion',
+                });
+
+            expect(response.status).toBe(201);
+            expect(response.body.content).toBe('Created from Notion');
+            expect(emitTgHubWebhook).not.toHaveBeenCalled();
+        });
+
         it('should require authentication', async () => {
             const inboxData = {
                 content: 'Test content',
