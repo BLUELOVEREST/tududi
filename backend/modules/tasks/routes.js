@@ -141,6 +141,10 @@ async function emitTaskWebhook(task, eventType) {
     await emitTgHubWebhook(payload);
 }
 
+function isTgHubSyncRequest(req) {
+    return req.get('X-Sync-Origin') === 'tg-hub';
+}
+
 async function copyInboxNotionMetadata(taskAttributes, inboxItemUid, userId) {
     if (!inboxItemUid) {
         return;
@@ -910,7 +914,9 @@ router.patch('/task/:uid', requireTaskWriteAccess, async (req, res) => {
             tagsData,
             req.currentUser.id
         );
-        await emitTaskWebhook(task, 'updated');
+        if (!isTgHubSyncRequest(req)) {
+            await emitTaskWebhook(task, 'updated');
+        }
 
         const taskWithAssociations = await taskRepository.findById(task.id, {
             include: TASK_INCLUDES_WITH_SUBTASKS,

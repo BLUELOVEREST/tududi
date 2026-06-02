@@ -371,6 +371,17 @@ describe('Inbox Routes', () => {
             });
         });
 
+        it('should skip webhook when update comes from tg-hub sync', async () => {
+            const response = await agent
+                .patch(`/api/inbox/${inboxItem.uid}`)
+                .set('X-Sync-Origin', 'tg-hub')
+                .send({ content: 'Synced from Notion' });
+
+            expect(response.status).toBe(200);
+            expect(response.body.content).toBe('Synced from Notion');
+            expect(emitTgHubWebhook).not.toHaveBeenCalled();
+        });
+
         it('should return 400 for invalid uid format', async () => {
             const response = await agent
                 .patch('/api/inbox/invalid-uid')

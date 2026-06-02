@@ -15,6 +15,10 @@ function requireUserId(req) {
     return userId;
 }
 
+function isTgHubSyncRequest(req) {
+    return req.get('X-Sync-Origin') === 'tg-hub';
+}
+
 /**
  * Inbox controller - handles HTTP requests/responses.
  */
@@ -82,6 +86,7 @@ const inboxController = {
             const item = await inboxService.update(userId, uid, {
                 content,
                 status,
+                suppressWebhook: isTgHubSyncRequest(req),
             });
             res.json(item);
         } catch (error) {

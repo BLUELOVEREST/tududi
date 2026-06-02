@@ -118,7 +118,7 @@ class InboxService {
     /**
      * Update an inbox item.
      */
-    async update(userId, uid, { content, status }) {
+    async update(userId, uid, { content, status, suppressWebhook = false }) {
         validateUid(uid);
 
         const item = await inboxRepository.findByUid(userId, uid);
@@ -140,7 +140,9 @@ class InboxService {
         }
 
         await inboxRepository.updateItem(item, updateData);
-        await emitInboxWebhook(item, 'updated');
+        if (!suppressWebhook) {
+            await emitInboxWebhook(item, 'updated');
+        }
 
         return _.pick(item, PUBLIC_ATTRIBUTES);
     }

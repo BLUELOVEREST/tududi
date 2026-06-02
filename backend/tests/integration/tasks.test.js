@@ -249,6 +249,17 @@ describe('Tasks Routes', () => {
             });
         });
 
+        it('should skip webhook when update comes from tg-hub sync', async () => {
+            const response = await agent
+                .patch(`/api/task/${task.uid}`)
+                .set('X-Sync-Origin', 'tg-hub')
+                .send({ name: 'Synced from Notion' });
+
+            expect(response.status).toBe(200);
+            expect(response.body.name).toBe('Synced from Notion');
+            expect(emitTgHubWebhook).not.toHaveBeenCalled();
+        });
+
         it('should update a task to optimizing status', async () => {
             const response = await agent
                 .patch(`/api/task/${task.uid}`)
