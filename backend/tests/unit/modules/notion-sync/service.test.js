@@ -55,9 +55,11 @@ describe('notion sync service', () => {
             backfillNotionEvents,
         } = require('../../../../modules/notion-sync/service');
 
-        await expect(backfillNotionEvents()).rejects.toThrow(
-            'TG_HUB_API_TOKEN is not configured.'
-        );
+        await expect(backfillNotionEvents()).rejects.toMatchObject({
+            message: 'TG_HUB_API_TOKEN is not configured.',
+            publicMessage: 'Notion sync is not configured.',
+            statusCode: 503,
+        });
     });
 
     it('maps tg-hub server failures to bad gateway', async () => {

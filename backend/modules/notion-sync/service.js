@@ -5,6 +5,7 @@ const buildBackfillUrl = ({ limit, dryRun }) => {
     if (!baseUrl) {
         const error = new Error('TG_HUB_API_BASE_URL is not configured.');
         error.statusCode = 503;
+        error.publicMessage = 'Notion sync is not configured.';
         throw error;
     }
 
@@ -21,6 +22,7 @@ async function backfillNotionEvents({ limit = 200, dryRun = false } = {}) {
     if (!token) {
         const error = new Error('TG_HUB_API_TOKEN is not configured.');
         error.statusCode = 503;
+        error.publicMessage = 'Notion sync is not configured.';
         throw error;
     }
 
