@@ -143,6 +143,7 @@ function buildTaskAttributes(body, userId, timezone, isUpdate = false) {
         due_date: processDueDateForStorage(dueDate, timezone),
         defer_until: processDeferUntilForStorage(body.defer_until, timezone),
         status: parseStatus(body.status, Task.STATUS.PLANNED),
+        event_type: body.event_type || 'atomic',
         note: body.note,
         recurrence_type: recurrenceType,
         recurrence_interval: body.recurrence_interval || null,
@@ -193,6 +194,8 @@ function buildUpdateAttributes(body, task, timezone) {
                 : task.priority,
         status:
             body.status !== undefined ? parseStatus(body.status) : task.status,
+        event_type:
+            body.event_type !== undefined ? body.event_type : task.event_type,
         note: body.note !== undefined ? body.note : task.note,
         recurrence_type: recurrenceType,
         recurrence_interval:

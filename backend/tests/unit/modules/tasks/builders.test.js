@@ -1,6 +1,45 @@
 const {
     calculateInitialDueDate,
+    buildTaskAttributes,
+    buildUpdateAttributes,
 } = require('../../../../modules/tasks/core/builders');
+
+describe('task event_type attributes', () => {
+    it('preserves event_type on create and update', () => {
+        const created = buildTaskAttributes(
+            {
+                name: 'Compound task',
+                event_type: 'compound',
+            },
+            1,
+            'UTC'
+        );
+        const updated = buildUpdateAttributes(
+            {
+                event_type: 'atomic',
+            },
+            {
+                name: 'Compound task',
+                priority: 1,
+                status: 1,
+                note: '',
+                event_type: 'compound',
+                recurrence_type: 'none',
+                recurrence_interval: null,
+                recurrence_end_date: null,
+                recurrence_weekday: null,
+                recurrence_weekdays: null,
+                recurrence_month_day: null,
+                recurrence_week_of_month: null,
+                completion_based: false,
+            },
+            'UTC'
+        );
+
+        expect(created.event_type).toBe('compound');
+        expect(updated.event_type).toBe('atomic');
+    });
+});
 
 describe('calculateInitialDueDate', () => {
     describe('Weekly recurrence with multiple weekdays', () => {
