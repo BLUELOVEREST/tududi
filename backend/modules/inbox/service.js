@@ -27,12 +27,18 @@ function toWebhookTimestamp(value) {
 }
 
 async function emitInboxWebhook(item, eventType) {
-    await emitTgHubWebhook({
+    const payload = {
         entityType: 'inbox_item',
         entityUid: item.uid,
         eventType,
         updatedAt: toWebhookTimestamp(item.updated_at || item.updatedAt),
-    });
+    };
+
+    if (item.notion_page_id) {
+        payload.notionPageId = item.notion_page_id;
+    }
+
+    await emitTgHubWebhook(payload);
 }
 
 class InboxService {
@@ -171,6 +177,7 @@ class InboxService {
         }
 
         await inboxRepository.softDelete(item);
+        await emitInboxWebhook(item, 'deleted');
 
         return { message: 'Inbox item successfully deleted' };
     }

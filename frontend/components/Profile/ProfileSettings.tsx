@@ -39,6 +39,7 @@ import {
     revokeApiKey,
     deleteApiKey,
 } from '../../utils/apiKeysService';
+import { copyTextToClipboard } from '../../utils/clipboardUtils';
 import TabsNav, { type TabConfig } from './tabs/TabsNav';
 import GeneralTab from './tabs/GeneralTab';
 import SecurityTab from './tabs/SecurityTab';
@@ -431,7 +432,7 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({
         if (!generatedApiToken) return;
 
         try {
-            await navigator.clipboard.writeText(generatedApiToken);
+            await copyTextToClipboard(generatedApiToken);
             showSuccessToast(
                 t('profile.apiKeys.copied', 'API key copied to clipboard.')
             );

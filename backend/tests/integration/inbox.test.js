@@ -280,6 +280,7 @@ describe('Inbox Routes', () => {
                 content: 'Test content',
                 source: 'test',
                 user_id: user.id,
+                notion_page_id: 'inbox-page-id',
             });
         });
 
@@ -480,6 +481,7 @@ describe('Inbox Routes', () => {
                 content: 'Test content',
                 source: 'test',
                 user_id: user.id,
+                notion_page_id: 'inbox-page-id',
             });
         });
 
@@ -497,6 +499,13 @@ describe('Inbox Routes', () => {
             });
             expect(deletedItem).not.toBeNull();
             expect(deletedItem.status).toBe('deleted');
+            expect(emitTgHubWebhook).toHaveBeenCalledWith({
+                entityType: 'inbox_item',
+                entityUid: inboxItem.uid,
+                eventType: 'deleted',
+                updatedAt: expect.any(String),
+                notionPageId: 'inbox-page-id',
+            });
         });
 
         it('should return 400 for invalid uid format', async () => {
@@ -585,6 +594,7 @@ describe('Inbox Routes', () => {
                 entityUid: taskResponse.body.uid,
                 eventType: 'created',
                 updatedAt: expect.any(String),
+                notionPageId: 'page-id',
             });
         });
 

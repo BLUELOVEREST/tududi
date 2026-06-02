@@ -20,13 +20,16 @@ describe('tgHubWebhookService', () => {
         process.env.TG_HUB_WEBHOOK_TOKEN = 'secret';
         global.fetch.mockResolvedValue({ ok: true, status: 204 });
 
-        const { emitTgHubWebhook } = require('../../../../modules/webhooks/tgHubWebhookService');
+        const {
+            emitTgHubWebhook,
+        } = require('../../../../modules/webhooks/tgHubWebhookService');
 
         await emitTgHubWebhook({
             entityType: 'task',
             entityUid: 'task-uid',
             eventType: 'created',
             updatedAt: '2026-06-01T00:00:00.000Z',
+            notionPageId: 'page-id',
         });
 
         expect(global.fetch).toHaveBeenCalledWith(
@@ -43,6 +46,7 @@ describe('tgHubWebhookService', () => {
                     entity_uid: 'task-uid',
                     event_type: 'created',
                     updated_at: '2026-06-01T00:00:00.000Z',
+                    notion_page_id: 'page-id',
                 }),
             }
         );
@@ -52,7 +56,9 @@ describe('tgHubWebhookService', () => {
         delete process.env.TG_HUB_WEBHOOK_URL;
         process.env.TG_HUB_WEBHOOK_TOKEN = 'secret';
 
-        const { emitTgHubWebhook } = require('../../../../modules/webhooks/tgHubWebhookService');
+        const {
+            emitTgHubWebhook,
+        } = require('../../../../modules/webhooks/tgHubWebhookService');
 
         await emitTgHubWebhook({
             entityType: 'inbox_item',
@@ -71,7 +77,9 @@ describe('tgHubWebhookService', () => {
             .spyOn(console, 'error')
             .mockImplementation(() => {});
 
-        const { emitTgHubWebhook } = require('../../../../modules/webhooks/tgHubWebhookService');
+        const {
+            emitTgHubWebhook,
+        } = require('../../../../modules/webhooks/tgHubWebhookService');
 
         await expect(
             emitTgHubWebhook({
@@ -96,7 +104,9 @@ describe('tgHubWebhookService', () => {
             .spyOn(console, 'error')
             .mockImplementation(() => {});
 
-        const { emitTgHubWebhook } = require('../../../../modules/webhooks/tgHubWebhookService');
+        const {
+            emitTgHubWebhook,
+        } = require('../../../../modules/webhooks/tgHubWebhookService');
 
         await expect(
             emitTgHubWebhook({

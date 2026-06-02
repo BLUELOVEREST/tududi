@@ -59,9 +59,7 @@ const {
     NOTION_METADATA_FIELDS,
     buildNotionMetadataUpdate,
 } = require('../notion/notionMetadata');
-const {
-    emitTgHubWebhook,
-} = require('../webhooks/tgHubWebhookService');
+const { emitTgHubWebhook } = require('../webhooks/tgHubWebhookService');
 
 const {
     handleRecurringTasks,
@@ -129,12 +127,18 @@ function toWebhookTimestamp(value) {
 }
 
 async function emitTaskWebhook(task, eventType) {
-    await emitTgHubWebhook({
+    const payload = {
         entityType: 'task',
         entityUid: task.uid,
         eventType,
         updatedAt: toWebhookTimestamp(task.updated_at || task.updatedAt),
-    });
+    };
+
+    if (task.notion_page_id) {
+        payload.notionPageId = task.notion_page_id;
+    }
+
+    await emitTgHubWebhook(payload);
 }
 
 async function copyInboxNotionMetadata(taskAttributes, inboxItemUid, userId) {
@@ -1018,6 +1022,8 @@ router.delete('/task/:uid', requireTaskWriteAccess, async (req, res) => {
         } finally {
             await sequelize.query('PRAGMA foreign_keys = ON');
         }
+
+        await emitTaskWebhook(task, 'deleted');
 
         res.json({ message: 'Task successfully deleted' });
     } catch (error) {

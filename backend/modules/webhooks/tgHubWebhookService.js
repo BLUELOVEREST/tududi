@@ -5,6 +5,7 @@ async function emitTgHubWebhook({
     entityUid,
     eventType,
     updatedAt,
+    notionPageId,
 }) {
     const url = process.env.TG_HUB_WEBHOOK_URL;
 
@@ -19,6 +20,10 @@ async function emitTgHubWebhook({
         event_type: eventType,
         updated_at: updatedAt,
     };
+
+    if (notionPageId) {
+        payload.notion_page_id = notionPageId;
+    }
 
     const headers = {
         'Content-Type': 'application/json',

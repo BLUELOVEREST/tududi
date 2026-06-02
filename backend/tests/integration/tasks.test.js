@@ -403,6 +403,7 @@ describe('Tasks Routes', () => {
             task = await Task.create({
                 name: 'Test Task',
                 user_id: user.id,
+                notion_page_id: 'task-page-id',
             });
         });
 
@@ -415,6 +416,13 @@ describe('Tasks Routes', () => {
             // Verify task is deleted
             const deletedTask = await Task.findByPk(task.id);
             expect(deletedTask).toBeNull();
+            expect(emitTgHubWebhook).toHaveBeenCalledWith({
+                entityType: 'task',
+                entityUid: task.uid,
+                eventType: 'deleted',
+                updatedAt: expect.any(String),
+                notionPageId: 'task-page-id',
+            });
         }, 10000); // 10 second timeout for DELETE operations
 
         it('should return 403 for non-existent task', async () => {
