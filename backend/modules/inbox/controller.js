@@ -16,7 +16,7 @@ function requireUserId(req) {
 }
 
 function isTgHubSyncRequest(req) {
-    return req.get('X-Sync-Origin') === 'tg-hub';
+    return req.get('X-Sync-Origin') === 'event-hub';
 }
 
 /**

@@ -15,9 +15,9 @@ describe('notion sync service', () => {
         jest.restoreAllMocks();
     });
 
-    it('calls tg-hub backfill with bearer token', async () => {
-        process.env.TG_HUB_API_BASE_URL = 'http://tg-hub:8090/api';
-        process.env.TG_HUB_API_TOKEN = 'api-token';
+    it('calls event-hub backfill with bearer token', async () => {
+        process.env.EVENT_HUB_API_BASE_URL = 'http://event-hub:8090/api';
+        process.env.EVENT_HUB_API_TOKEN = 'api-token';
         global.fetch.mockResolvedValue({
             ok: true,
             json: async () => ({
@@ -39,7 +39,7 @@ describe('notion sync service', () => {
         });
 
         expect(global.fetch).toHaveBeenCalledWith(
-            'http://tg-hub:8090/api/sync/notion/backfill?limit=200&dry_run=true',
+            'http://event-hub:8090/api/sync/notion/backfill?limit=200&dry_run=true',
             {
                 method: 'POST',
                 headers: {
@@ -50,21 +50,21 @@ describe('notion sync service', () => {
         expect(result.synced).toBe(2);
     });
 
-    it('requires tg-hub API config', async () => {
+    it('requires event-hub API config', async () => {
         const {
             backfillNotionEvents,
         } = require('../../../../modules/notion-sync/service');
 
         await expect(backfillNotionEvents()).rejects.toMatchObject({
-            message: 'TG_HUB_API_TOKEN is not configured.',
+            message: 'EVENT_HUB_API_TOKEN is not configured.',
             publicMessage: 'Notion sync is not configured.',
             statusCode: 503,
         });
     });
 
-    it('maps tg-hub server failures to bad gateway', async () => {
-        process.env.TG_HUB_API_BASE_URL = 'http://tg-hub:8090/api';
-        process.env.TG_HUB_API_TOKEN = 'api-token';
+    it('maps event-hub server failures to bad gateway', async () => {
+        process.env.EVENT_HUB_API_BASE_URL = 'http://event-hub:8090/api';
+        process.env.EVENT_HUB_API_TOKEN = 'api-token';
         global.fetch.mockResolvedValue({
             ok: false,
             status: 500,

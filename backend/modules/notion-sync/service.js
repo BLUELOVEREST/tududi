@@ -1,9 +1,9 @@
 'use strict';
 
 const buildBackfillUrl = ({ limit, dryRun }) => {
-    const baseUrl = process.env.TG_HUB_API_BASE_URL;
+    const baseUrl = process.env.EVENT_HUB_API_BASE_URL;
     if (!baseUrl) {
-        const error = new Error('TG_HUB_API_BASE_URL is not configured.');
+        const error = new Error('EVENT_HUB_API_BASE_URL is not configured.');
         error.statusCode = 503;
         error.publicMessage = 'Notion sync is not configured.';
         throw error;
@@ -18,9 +18,9 @@ const buildBackfillUrl = ({ limit, dryRun }) => {
 };
 
 async function backfillNotionEvents({ limit = 200, dryRun = false } = {}) {
-    const token = process.env.TG_HUB_API_TOKEN;
+    const token = process.env.EVENT_HUB_API_TOKEN;
     if (!token) {
-        const error = new Error('TG_HUB_API_TOKEN is not configured.');
+        const error = new Error('EVENT_HUB_API_TOKEN is not configured.');
         error.statusCode = 503;
         error.publicMessage = 'Notion sync is not configured.';
         throw error;
@@ -45,7 +45,7 @@ async function backfillNotionEvents({ limit = 200, dryRun = false } = {}) {
 
     if (!response.ok) {
         const error = new Error(
-            body?.detail || body?.error || 'tg-hub Notion backfill failed.'
+            body?.detail || body?.error || 'event-hub Notion backfill failed.'
         );
         error.statusCode = response.status >= 500 ? 502 : response.status;
         error.response = body;

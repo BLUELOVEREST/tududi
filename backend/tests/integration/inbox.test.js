@@ -52,10 +52,10 @@ describe('Inbox Routes', () => {
             });
         });
 
-        it('should skip webhook when create comes from tg-hub sync', async () => {
+        it('should skip webhook when create comes from event-hub sync', async () => {
             const response = await agent
                 .post('/api/inbox')
-                .set('X-Sync-Origin', 'tg-hub')
+                .set('X-Sync-Origin', 'event-hub')
                 .send({
                     content: 'Created from Notion',
                     source: 'notion',
@@ -385,10 +385,10 @@ describe('Inbox Routes', () => {
             });
         });
 
-        it('should skip webhook when update comes from tg-hub sync', async () => {
+        it('should skip webhook when update comes from event-hub sync', async () => {
             const response = await agent
                 .patch(`/api/inbox/${inboxItem.uid}`)
-                .set('X-Sync-Origin', 'tg-hub')
+                .set('X-Sync-Origin', 'event-hub')
                 .send({ content: 'Synced from Notion' });
 
             expect(response.status).toBe(200);

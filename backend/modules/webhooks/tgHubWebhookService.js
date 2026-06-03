@@ -7,7 +7,7 @@ async function emitTgHubWebhook({
     updatedAt,
     notionPageId,
 }) {
-    const url = process.env.TG_HUB_WEBHOOK_URL;
+    const url = process.env.EVENT_HUB_WEBHOOK_URL;
 
     if (!url) {
         return;
@@ -29,8 +29,8 @@ async function emitTgHubWebhook({
         'Content-Type': 'application/json',
     };
 
-    if (process.env.TG_HUB_WEBHOOK_TOKEN) {
-        headers.Authorization = `Bearer ${process.env.TG_HUB_WEBHOOK_TOKEN}`;
+    if (process.env.EVENT_HUB_WEBHOOK_TOKEN) {
+        headers.Authorization = `Bearer ${process.env.EVENT_HUB_WEBHOOK_TOKEN}`;
     }
 
     try {
@@ -41,13 +41,13 @@ async function emitTgHubWebhook({
         });
 
         if (!response.ok) {
-            console.error('tg-hub webhook failed:', {
+            console.error('event-hub webhook failed:', {
                 status: response.status,
                 statusText: response.statusText,
             });
         }
     } catch (error) {
-        console.error('tg-hub webhook failed:', error);
+        console.error('event-hub webhook failed:', error);
     }
 }
 

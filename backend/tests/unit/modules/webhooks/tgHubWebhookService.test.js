@@ -16,8 +16,8 @@ describe('tgHubWebhookService', () => {
     });
 
     it('posts an authenticated webhook when URL and token are configured', async () => {
-        process.env.TG_HUB_WEBHOOK_URL = 'https://tg-hub.example/webhooks';
-        process.env.TG_HUB_WEBHOOK_TOKEN = 'secret';
+        process.env.EVENT_HUB_WEBHOOK_URL = 'https://event-hub.example/webhooks';
+        process.env.EVENT_HUB_WEBHOOK_TOKEN = 'secret';
         global.fetch.mockResolvedValue({ ok: true, status: 204 });
 
         const {
@@ -33,7 +33,7 @@ describe('tgHubWebhookService', () => {
         });
 
         expect(global.fetch).toHaveBeenCalledWith(
-            'https://tg-hub.example/webhooks',
+            'https://event-hub.example/webhooks',
             {
                 method: 'POST',
                 headers: {
@@ -53,8 +53,8 @@ describe('tgHubWebhookService', () => {
     });
 
     it('skips sending when URL is not configured', async () => {
-        delete process.env.TG_HUB_WEBHOOK_URL;
-        process.env.TG_HUB_WEBHOOK_TOKEN = 'secret';
+        delete process.env.EVENT_HUB_WEBHOOK_URL;
+        process.env.EVENT_HUB_WEBHOOK_TOKEN = 'secret';
 
         const {
             emitTgHubWebhook,
@@ -71,7 +71,7 @@ describe('tgHubWebhookService', () => {
     });
 
     it('logs but does not throw on fetch failures', async () => {
-        process.env.TG_HUB_WEBHOOK_URL = 'https://tg-hub.example/webhooks';
+        process.env.EVENT_HUB_WEBHOOK_URL = 'https://event-hub.example/webhooks';
         global.fetch.mockRejectedValue(new Error('network down'));
         const consoleError = jest
             .spyOn(console, 'error')
@@ -94,7 +94,7 @@ describe('tgHubWebhookService', () => {
     });
 
     it('logs but does not throw on non-successful responses', async () => {
-        process.env.TG_HUB_WEBHOOK_URL = 'https://tg-hub.example/webhooks';
+        process.env.EVENT_HUB_WEBHOOK_URL = 'https://event-hub.example/webhooks';
         global.fetch.mockResolvedValue({
             ok: false,
             status: 502,
@@ -118,7 +118,7 @@ describe('tgHubWebhookService', () => {
         ).resolves.toBeUndefined();
 
         expect(consoleError).toHaveBeenCalledWith(
-            'tg-hub webhook failed:',
+            'event-hub webhook failed:',
             expect.objectContaining({
                 status: 502,
                 statusText: 'Bad Gateway',

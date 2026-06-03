@@ -142,7 +142,7 @@ async function emitTaskWebhook(task, eventType) {
 }
 
 function isTgHubSyncRequest(req) {
-    return req.get('X-Sync-Origin') === 'tg-hub';
+    return req.get('X-Sync-Origin') === 'event-hub';
 }
 
 async function copyInboxNotionMetadata(taskAttributes, inboxItemUid, userId) {
