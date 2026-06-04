@@ -74,13 +74,18 @@ export const fetchInboxItemByUid = async (
 export const createInboxItem = async (
     content: string,
     source?: string,
-    priority?: PriorityType
+    priority?: PriorityType,
+    brief?: string
 ): Promise<InboxItem> => {
     const body: {
         content: string;
+        brief?: string;
         source?: string;
         priority?: PriorityType;
     } = { content };
+    if (brief !== undefined) {
+        body.brief = brief;
+    }
     if (source) {
         body.source = source;
     }
@@ -102,9 +107,15 @@ export const createInboxItem = async (
 export const updateInboxItem = async (
     itemUid: string,
     content: string,
-    priority?: PriorityType
+    priority?: PriorityType,
+    brief?: string
 ): Promise<InboxItem> => {
-    const body: { content: string; priority?: PriorityType } = { content };
+    const body: { content: string; brief?: string; priority?: PriorityType } = {
+        content,
+    };
+    if (brief !== undefined) {
+        body.brief = brief;
+    }
     if (priority !== undefined) {
         body.priority = priority;
     }
@@ -285,12 +296,13 @@ export const loadMoreInboxItemsToStore = async (): Promise<void> => {
 export const createInboxItemWithStore = async (
     content: string,
     source?: string,
-    priority?: PriorityType
+    priority?: PriorityType,
+    brief?: string
 ): Promise<InboxItem> => {
     const inboxStore = useStore.getState().inboxStore;
 
     try {
-        const newItem = await createInboxItem(content, source, priority);
+        const newItem = await createInboxItem(content, source, priority, brief);
         inboxStore.addInboxItem(newItem);
         scheduleInboxNotionRefresh(newItem);
         return newItem;
@@ -303,12 +315,18 @@ export const createInboxItemWithStore = async (
 export const updateInboxItemWithStore = async (
     itemUid: string,
     content: string,
-    priority?: PriorityType
+    priority?: PriorityType,
+    brief?: string
 ): Promise<InboxItem> => {
     const inboxStore = useStore.getState().inboxStore;
 
     try {
-        const updatedItem = await updateInboxItem(itemUid, content, priority);
+        const updatedItem = await updateInboxItem(
+            itemUid,
+            content,
+            priority,
+            brief
+        );
         inboxStore.updateInboxItem(updatedItem);
         scheduleInboxNotionRefresh(updatedItem);
         return updatedItem;

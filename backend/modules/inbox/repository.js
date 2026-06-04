@@ -7,6 +7,7 @@ const PUBLIC_ATTRIBUTES = [
     'uid',
     'title',
     'content',
+    'brief',
     'status',
     'priority',
     'source',
@@ -115,10 +116,11 @@ class InboxRepository extends BaseRepository {
     /**
      * Create a new inbox item for a user.
      */
-    async createForUser(userId, { content, title, source, priority }) {
+    async createForUser(userId, { content, title, brief, source, priority }) {
         return this.model.create({
             content,
             title,
+            brief,
             source,
             priority,
             user_id: userId,

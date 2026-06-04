@@ -24,6 +24,11 @@ module.exports = (sequelize) => {
                 type: DataTypes.TEXT,
                 allowNull: true,
             },
+            brief: {
+                type: DataTypes.TEXT,
+                allowNull: true,
+                defaultValue: null,
+            },
             status: {
                 type: DataTypes.STRING,
                 allowNull: false,

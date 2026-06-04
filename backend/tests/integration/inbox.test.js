@@ -33,6 +33,7 @@ describe('Inbox Routes', () => {
         it('should create a new inbox item', async () => {
             const inboxData = {
                 content: 'Remember to buy groceries',
+                brief: 'Use the shared family list before the weekend.',
                 source: 'web',
                 priority: 'high',
             };
@@ -41,6 +42,7 @@ describe('Inbox Routes', () => {
 
             expect(response.status).toBe(201);
             expect(response.body.content).toBe(inboxData.content);
+            expect(response.body.brief).toBe(inboxData.brief);
             expect(response.body.source).toBe(inboxData.source);
             expect(response.body.status).toBe('added');
             expect(response.body.priority).toBe(2);

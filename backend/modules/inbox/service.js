@@ -100,7 +100,7 @@ class InboxService {
     /**
      * Create a new inbox item.
      */
-    async create(userId, { content, source, priority, suppressWebhook = false }) {
+    async create(userId, { content, brief, source, priority, suppressWebhook = false }) {
         const validatedContent = validateContent(content);
         const validatedSource = validateSource(source);
         const validatedPriority = validatePriority(priority);
@@ -109,6 +109,7 @@ class InboxService {
         const item = await inboxRepository.createForUser(userId, {
             content: validatedContent,
             title,
+            brief: brief ?? null,
             source: validatedSource,
             priority: validatedPriority,
         });
@@ -123,7 +124,7 @@ class InboxService {
     /**
      * Update an inbox item.
      */
-    async update(userId, uid, { content, status, priority, suppressWebhook = false }) {
+    async update(userId, uid, { content, brief, status, priority, suppressWebhook = false }) {
         validateUid(uid);
 
         const item = await inboxRepository.findByUid(userId, uid);
@@ -138,6 +139,10 @@ class InboxService {
             const validatedContent = validateContent(content);
             updateData.content = validatedContent;
             updateData.title = buildTitleFromContent(validatedContent);
+        }
+
+        if (brief !== undefined) {
+            updateData.brief = brief ?? null;
         }
 
         if (status !== undefined && status !== null) {

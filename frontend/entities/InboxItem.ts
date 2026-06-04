@@ -3,6 +3,7 @@ export interface InboxItem {
     uid?: string;
     content: string;
     title?: string | null;
+    brief?: string | null;
     status?: string; // 'added' | 'processed' | 'deleted'
     priority?: number | 'low' | 'medium' | 'high' | null;
     source?: string; // 'telegram'

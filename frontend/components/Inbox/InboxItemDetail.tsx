@@ -227,15 +227,18 @@ const InboxItemDetail: React.FC<InboxItemDetailProps> = ({
     };
 
     const fullContent = item.content || '';
+    const briefContent = item.brief || '';
     const displayText =
         item.title && item.title.trim().length > 0 ? item.title : fullContent;
-    const baseContent = fullContent || displayText;
+    const baseContent = [fullContent || displayText, briefContent]
+        .filter(Boolean)
+        .join('\n\n');
     const cleanedPreviewText = cleanTextFromTagsAndProjects(displayText);
     const previewText =
         cleanedPreviewText.length > 0 ? cleanedPreviewText : displayText;
 
     const hashtags = useMemo(() => {
-        const parsed = parseHashtags(fullContent);
+        const parsed = parseHashtags(baseContent);
         const hasBookmark = parsed.some(
             (tag) => tag.toLowerCase() === 'bookmark'
         );
@@ -243,16 +246,17 @@ const InboxItemDetail: React.FC<InboxItemDetailProps> = ({
             return [...parsed, 'bookmark'];
         }
         return parsed;
-    }, [fullContent]);
+    }, [baseContent, fullContent]);
     const isBookmarkItem = useMemo(
         () => hashtags.some((tag) => tag.toLowerCase() === 'bookmark'),
         [hashtags]
     );
-    const projectRefs = parseProjectRefs(fullContent);
+    const projectRefs = parseProjectRefs(baseContent);
     const hasLongContent =
-        Boolean(item.title && item.title.trim()) &&
-        item.title !== null &&
-        item.title !== fullContent;
+        Boolean(briefContent.trim()) ||
+        (Boolean(item.title && item.title.trim()) &&
+            item.title !== null &&
+            item.title !== fullContent);
     const iconTooltip = isBookmarkItem
         ? t('inbox.iconTooltip.bookmark', 'Bookmark link')
         : t('inbox.iconTooltip.text', 'Captured text');
@@ -373,9 +377,12 @@ const InboxItemDetail: React.FC<InboxItemDetailProps> = ({
             );
 
             const newTask: Task = {
-                name: payload.cleanedContent || displayText,
+                name: context
+                    ? payload.cleanedContent || displayText
+                    : displayText,
                 status: 'not_started',
                 priority: item.priority ?? null,
+                note: briefContent,
                 tags: payload.tagObjects,
                 project_id: payload.projectId,
                 completed_at: null,
@@ -707,6 +714,14 @@ const InboxItemDetail: React.FC<InboxItemDetailProps> = ({
                                 >
                                     {linkifyContent(previewText)}
                                 </button>
+                                {briefContent.trim() && (
+                                    <button
+                                        onClick={handleStartEdit}
+                                        className="mt-1 block w-full whitespace-pre-wrap break-words text-left text-sm leading-5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+                                    >
+                                        {linkifyContent(briefContent)}
+                                    </button>
+                                )}
                             </div>
                             <div className="flex-shrink-0">
                                 <NotionLinkButton url={item.notion_url} />

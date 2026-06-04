@@ -135,6 +135,7 @@ const QuickCaptureInput = React.forwardRef<
     ) => {
         const { t } = useTranslation();
         const [inputText, setInputText] = useState<string>(initialValue);
+        const [briefText, setBriefText] = useState<string>('');
         const [selectedPriority, setSelectedPriority] =
             useState<PriorityType>(null);
         const [isSaving, setIsSaving] = useState(false);
@@ -192,6 +193,7 @@ const QuickCaptureInput = React.forwardRef<
 
         const clearComposerText = useCallback(() => {
             setInputText('');
+            setBriefText('');
             setAnalysisResult(null);
             setUrlPreview(null);
             dismissedPreviewUrlRef.current = null;
@@ -199,6 +201,23 @@ const QuickCaptureInput = React.forwardRef<
                 inputRef.current.focus();
             }
         }, []);
+
+        const getComposedInputText = useCallback(() => {
+            return [inputText.trim(), briefText.trim()]
+                .filter(Boolean)
+                .join('\n\n');
+        }, [inputText, briefText]);
+
+        const getInboxPayload = useCallback(() => {
+            const titleText = inputText.trim();
+            const brief = briefText.trim();
+            const fallbackTitle = brief.split('\n')[0]?.trim() || '';
+
+            return {
+                content: titleText || fallbackTitle,
+                brief,
+            };
+        }, [inputText, briefText]);
 
         const parseHashtags = (text: string): string[] => {
             const trimmedText = text.trim();
@@ -894,7 +913,7 @@ const QuickCaptureInput = React.forwardRef<
             const requestId = analysisRequestIdRef.current + 1;
             analysisRequestIdRef.current = requestId;
 
-            const textForAnalysis = inputText;
+            const textForAnalysis = getComposedInputText();
 
             analysisTimeoutRef.current = setTimeout(() => {
                 analyzeText(textForAnalysis, requestId);
@@ -905,7 +924,7 @@ const QuickCaptureInput = React.forwardRef<
                     clearTimeout(analysisTimeoutRef.current);
                 }
             };
-        }, [inputText, analyzeText]);
+        }, [getComposedInputText, analyzeText]);
 
         const handleTagSelect = (tagName: string) => {
             const beforeCursor = inputText.substring(0, cursorPosition);
@@ -1037,7 +1056,10 @@ const QuickCaptureInput = React.forwardRef<
 
         const handleSubmit = useCallback(
             async (forceInbox = false) => {
-                const trimmedText = inputText.trim();
+                const composedText = getComposedInputText();
+                const trimmedText = isEditMode
+                    ? inputText.trim()
+                    : composedText;
                 if ((!trimmedText && !isEditMode) || isSaving) return;
 
                 setIsSaving(true);
@@ -1101,6 +1123,7 @@ const QuickCaptureInput = React.forwardRef<
                             await onTaskCreate(newTask);
                             showSuccessToast(t('task.createSuccess'));
                             setInputText('');
+                            setBriefText('');
                             setSelectedPriority(null);
                             setAnalysisResult(null);
                             if (inputRef.current) {
@@ -1182,6 +1205,7 @@ const QuickCaptureInput = React.forwardRef<
                                 )
                             );
                             setInputText('');
+                            setBriefText('');
                             setSelectedPriority(null);
                             setAnalysisResult(null);
                             if (inputRef.current) {
@@ -1203,13 +1227,16 @@ const QuickCaptureInput = React.forwardRef<
                     try {
                         await createMissingTags(trimmedText);
                         await createMissingProjects(trimmedText);
+                        const inboxPayload = getInboxPayload();
                         await createInboxItemWithStore(
-                            trimmedText,
+                            inboxPayload.content,
                             undefined,
-                            selectedPriority
+                            selectedPriority,
+                            inboxPayload.brief
                         );
                         showSuccessToast(t('inbox.itemAdded'));
                         setInputText('');
+                        setBriefText('');
                         setSelectedPriority(null);
                         setAnalysisResult(null);
                         if (inputRef.current) {
@@ -1228,7 +1255,10 @@ const QuickCaptureInput = React.forwardRef<
             },
             [
                 inputText,
+                getComposedInputText,
+                getInboxPayload,
                 isSaving,
+                isEditMode,
                 onTaskCreate,
                 onNoteCreate,
                 showSuccessToast,
@@ -1256,15 +1286,18 @@ const QuickCaptureInput = React.forwardRef<
         );
 
         const composerFooterContext = useMemo<InboxComposerFooterContext>(
-            () => ({
-                text: inputText,
-                cleanedText: getCleanedContent(inputText.trim()),
-                hashtags: getAllTags(inputText),
-                projectRefs: getAllProjects(inputText),
-                clearText: clearComposerText,
-                updateText: (value: string) => setInputText(value),
-            }),
-            [inputText, clearComposerText]
+            () => {
+                const composedText = getComposedInputText();
+                return {
+                    text: composedText,
+                    cleanedText: getCleanedContent(composedText.trim()),
+                    hashtags: getAllTags(composedText),
+                    projectRefs: getAllProjects(composedText),
+                    clearText: clearComposerText,
+                    updateText: (value: string) => setInputText(value),
+                };
+            },
+            [getComposedInputText, clearComposerText]
         );
 
         const defaultFooterActions =
@@ -1416,6 +1449,7 @@ const QuickCaptureInput = React.forwardRef<
         const shouldShowPrimaryButton = !hidePrimaryButton && !isEditMode;
 
         const cardClasses = cardClassName ?? 'mb-6';
+        const composedInputText = getComposedInputText();
 
         return (
             <InboxCard
@@ -1875,10 +1909,39 @@ const QuickCaptureInput = React.forwardRef<
                                     />
                                 )}
                             </div>
+                            {!isEditMode && (
+                                <div className="ml-8 border-t border-gray-100 pt-2 dark:border-gray-800">
+                                    <textarea
+                                        value={briefText}
+                                        rows={2}
+                                        onChange={(event) =>
+                                            setBriefText(event.target.value)
+                                        }
+                                        onKeyDown={(event) => {
+                                            if (
+                                                event.key === 'Enter' &&
+                                                (event.metaKey ||
+                                                    event.ctrlKey) &&
+                                                !isSaving
+                                            ) {
+                                                event.preventDefault();
+                                                handleSubmit();
+                                            }
+                                        }}
+                                        className="w-full resize-none border-0 bg-transparent px-0 py-1 text-sm font-normal text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-0 dark:text-gray-300 dark:placeholder-gray-500"
+                                        placeholder={t(
+                                            'inbox.captureBrief',
+                                            'Add brief, context, or next steps...'
+                                        )}
+                                    />
+                                </div>
+                            )}
 
                             <InboxSelectedChips
-                                selectedTags={getAllTags(inputText)}
-                                selectedProjects={getAllProjects(inputText)}
+                                selectedTags={getAllTags(composedInputText)}
+                                selectedProjects={getAllProjects(
+                                    composedInputText
+                                )}
                                 tags={tags}
                                 projects={projects}
                                 onRemoveTag={removeTagFromText}
@@ -2100,9 +2163,11 @@ const QuickCaptureInput = React.forwardRef<
                                 <button
                                     type="button"
                                     onClick={() => handleSubmit(false)}
-                                    disabled={!inputText.trim() || isSaving}
+                                    disabled={
+                                        !composedInputText.trim() || isSaving
+                                    }
                                     className={`inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white rounded-lg shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:ring-offset-1 dark:focus:ring-offset-gray-800 transition-colors ${
-                                        inputText.trim() && !isSaving
+                                        composedInputText.trim() && !isSaving
                                             ? 'bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600'
                                             : 'bg-blue-400 dark:bg-blue-700 cursor-not-allowed'
                                     }`}

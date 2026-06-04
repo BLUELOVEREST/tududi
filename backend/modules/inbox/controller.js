@@ -66,9 +66,10 @@ const inboxController = {
     async create(req, res, next) {
         try {
             const userId = requireUserId(req);
-            const { content, source, priority } = req.body;
+            const { content, brief, source, priority } = req.body;
             const item = await inboxService.create(userId, {
                 content,
+                brief,
                 source,
                 priority,
                 suppressWebhook: isTgHubSyncRequest(req),
@@ -87,9 +88,10 @@ const inboxController = {
         try {
             const userId = requireUserId(req);
             const { uid } = req.params;
-            const { content, status, priority } = req.body;
+            const { content, brief, status, priority } = req.body;
             const item = await inboxService.update(userId, uid, {
                 content,
+                brief,
                 status,
                 priority,
                 suppressWebhook: isTgHubSyncRequest(req),
