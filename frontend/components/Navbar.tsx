@@ -21,7 +21,11 @@ import { setUserTimezone } from '../utils/dateUtils';
 import { useToast } from './Shared/ToastContext';
 import {
     backfillNotionEvents,
+    diffNotionSyncRecords,
     NotionBackfillResult,
+    NotionSyncDiffResult,
+    pushTududiRecordsToNotion,
+    retryFailedNotionSync,
 } from '../utils/notionSyncService';
 
 interface NavbarProps {
@@ -50,6 +54,9 @@ const Navbar: React.FC<NavbarProps> = ({
     const [isSyncPanelOpen, setIsSyncPanelOpen] = useState(false);
     const [isSyncing, setIsSyncing] = useState(false);
     const [syncResult, setSyncResult] = useState<NotionBackfillResult | null>(
+        null
+    );
+    const [syncDiff, setSyncDiff] = useState<NotionSyncDiffResult | null>(
         null
     );
     const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
@@ -187,33 +194,74 @@ const Navbar: React.FC<NavbarProps> = ({
     const formatSyncResult = (result: NotionBackfillResult) =>
         `Total ${result.total}, synced ${result.synced}, skipped ${result.skipped}, errors ${result.errors.length}`;
 
-    const handleNotionBackfill = async (dryRun: boolean) => {
+    const handleSyncError = (error: unknown) => {
+        const message =
+            error instanceof Error
+                ? error.message
+                : 'Failed to sync Notion events.';
+        showErrorToast(message);
+    };
+
+    const refreshSyncDiff = async () => {
+        const result = await diffNotionSyncRecords({ limit: 200 });
+        setSyncDiff(result);
+        return result;
+    };
+
+    const handleNotionDiff = async () => {
         setIsSyncing(true);
         try {
-            const result = await backfillNotionEvents({
-                limit: 200,
-                dryRun,
-            });
-            setSyncResult(result);
-
-            if (dryRun) {
-                showSuccessToast(
-                    `Notion dry run complete. ${formatSyncResult(result)}`
-                );
-                return;
-            }
-
+            const result = await refreshSyncDiff();
             showSuccessToast(
-                `Notion sync complete. ${formatSyncResult(result)}`
+                `Sync check complete. Notion only ${result.missing_in_tududi}, Tududi only ${result.missing_in_notion}, failed ${result.failed}.`
+            );
+        } catch (error) {
+            handleSyncError(error);
+        } finally {
+            setIsSyncing(false);
+        }
+    };
+
+    const handleImportFromNotion = async () => {
+        setIsSyncing(true);
+        try {
+            const result = await backfillNotionEvents({ limit: 200 });
+            setSyncResult(result);
+            showSuccessToast(
+                `Imported from Notion. ${formatSyncResult(result)}`
             );
             window.dispatchEvent(new CustomEvent('forceInboxReload'));
             window.dispatchEvent(new CustomEvent('notionBackfillCompleted'));
+            await refreshSyncDiff();
         } catch (error) {
-            const message =
-                error instanceof Error
-                    ? error.message
-                    : 'Failed to sync Notion events.';
-            showErrorToast(message);
+            handleSyncError(error);
+        } finally {
+            setIsSyncing(false);
+        }
+    };
+
+    const handlePushToNotion = async () => {
+        setIsSyncing(true);
+        try {
+            const result = await pushTududiRecordsToNotion({ limit: 200 });
+            setSyncResult(result);
+            showSuccessToast(`Pushed to Notion. ${formatSyncResult(result)}`);
+            await refreshSyncDiff();
+        } catch (error) {
+            handleSyncError(error);
+        } finally {
+            setIsSyncing(false);
+        }
+    };
+
+    const handleRetryFailed = async () => {
+        setIsSyncing(true);
+        try {
+            await retryFailedNotionSync();
+            showSuccessToast('Retry failed Notion sync complete.');
+            await refreshSyncDiff();
+        } catch (error) {
+            handleSyncError(error);
         } finally {
             setIsSyncing(false);
         }
@@ -318,10 +366,27 @@ const Navbar: React.FC<NavbarProps> = ({
                                     <div className="mt-1 text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
                                         {t(
                                             'notionSync.description',
-                                            'Backfill Notion events into Tududi inbox and tasks.'
+                                            'Check differences, then choose one sync direction.'
                                         )}
                                     </div>
                                 </div>
+
+                                {syncDiff && (
+                                    <div className="mb-3 rounded-md bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 px-3 py-2 text-xs text-gray-600 dark:text-gray-300 space-y-1">
+                                        <div>
+                                            Notion only{' '}
+                                            {syncDiff.missing_in_tududi} ·
+                                            Tududi only{' '}
+                                            {syncDiff.missing_in_notion}
+                                        </div>
+                                        <div>
+                                            Failed {syncDiff.failed} · Notion{' '}
+                                            {syncDiff.notion_total} · Tududi{' '}
+                                            {syncDiff.tududi_inbox_total +
+                                                syncDiff.tududi_task_total}
+                                        </div>
+                                    </div>
+                                )}
 
                                 {syncResult && (
                                     <div className="mb-3 rounded-md bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 px-3 py-2 text-xs text-gray-600 dark:text-gray-300 space-y-1">
@@ -339,29 +404,44 @@ const Navbar: React.FC<NavbarProps> = ({
                                     </div>
                                 )}
 
-                                <div className="flex items-center justify-end gap-2">
+                                <div className="grid grid-cols-2 gap-2">
                                     <button
                                         type="button"
-                                        onClick={() =>
-                                            handleNotionBackfill(true)
-                                        }
+                                        onClick={handleNotionDiff}
                                         disabled={isSyncing}
                                         className="px-3 py-2 text-sm font-medium rounded-md border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
-                                        {t('notionSync.dryRun', 'Dry run')}
+                                        {t('notionSync.check', 'Check')}
                                     </button>
                                     <button
                                         type="button"
-                                        onClick={() =>
-                                            handleNotionBackfill(false)
-                                        }
+                                        onClick={handleImportFromNotion}
                                         disabled={isSyncing}
-                                        className="inline-flex items-center px-3 py-2 text-sm font-medium rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className="px-3 py-2 text-sm font-medium rounded-md border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        {t(
+                                            'notionSync.importFromNotion',
+                                            'Import'
+                                        )}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={handlePushToNotion}
+                                        disabled={isSyncing}
+                                        className="px-3 py-2 text-sm font-medium rounded-md border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        {t('notionSync.pushToNotion', 'Push')}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={handleRetryFailed}
+                                        disabled={isSyncing}
+                                        className="inline-flex items-center justify-center px-3 py-2 text-sm font-medium rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         {isSyncing && (
                                             <ArrowPathIcon className="mr-2 h-4 w-4 animate-spin" />
                                         )}
-                                        {t('notionSync.syncNow', 'Sync now')}
+                                        {t('notionSync.retryFailed', 'Retry')}
                                     </button>
                                 </div>
                             </div>

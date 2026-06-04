@@ -70,6 +70,30 @@ describe('tgHubWebhookService', () => {
         expect(global.fetch).not.toHaveBeenCalled();
     });
 
+    it('does not wait for event-hub to finish processing the webhook', async () => {
+        process.env.EVENT_HUB_WEBHOOK_URL = 'https://event-hub.example/webhooks';
+        global.fetch.mockReturnValue(new Promise(() => {}));
+
+        const {
+            emitTgHubWebhook,
+        } = require('../../../../modules/webhooks/tgHubWebhookService');
+
+        const result = await Promise.race([
+            emitTgHubWebhook({
+                entityType: 'task',
+                entityUid: 'task-uid',
+                eventType: 'updated',
+                updatedAt: '2026-06-01T00:00:00.000Z',
+            }).then(() => 'resolved'),
+            new Promise((resolve) =>
+                setTimeout(() => resolve('blocked'), 10)
+            ),
+        ]);
+
+        expect(result).toBe('resolved');
+        expect(global.fetch).toHaveBeenCalledTimes(1);
+    });
+
     it('logs but does not throw on fetch failures', async () => {
         process.env.EVENT_HUB_WEBHOOK_URL = 'https://event-hub.example/webhooks';
         global.fetch.mockRejectedValue(new Error('network down'));

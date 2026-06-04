@@ -33,22 +33,22 @@ async function emitTgHubWebhook({
         headers.Authorization = `Bearer ${process.env.EVENT_HUB_WEBHOOK_TOKEN}`;
     }
 
-    try {
-        const response = await fetch(url, {
-            method: 'POST',
-            headers,
-            body: JSON.stringify(payload),
+    void fetch(url, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(payload),
+    })
+        .then((response) => {
+            if (!response.ok) {
+                console.error('event-hub webhook failed:', {
+                    status: response.status,
+                    statusText: response.statusText,
+                });
+            }
+        })
+        .catch((error) => {
+            console.error('event-hub webhook failed:', error);
         });
-
-        if (!response.ok) {
-            console.error('event-hub webhook failed:', {
-                status: response.status,
-                statusText: response.statusText,
-            });
-        }
-    } catch (error) {
-        console.error('event-hub webhook failed:', error);
-    }
 }
 
 module.exports = {

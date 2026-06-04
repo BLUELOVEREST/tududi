@@ -53,6 +53,23 @@ export const fetchInboxItems = async (
     return result;
 };
 
+export const fetchInboxItemByUid = async (
+    itemUid: string
+): Promise<InboxItem> => {
+    const response = await fetch(
+        getApiPath(`inbox/${encodeURIComponent(itemUid)}`),
+        {
+            credentials: 'include',
+            headers: {
+                Accept: 'application/json',
+            },
+        }
+    );
+
+    await handleAuthResponse(response, 'Failed to fetch inbox item.');
+    return await response.json();
+};
+
 export const createInboxItem = async (
     content: string,
     source?: string
@@ -113,6 +130,40 @@ export const deleteInboxItem = async (itemUid: string): Promise<void> => {
 // Track last check time to detect new items
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const lastCheckTimestamp = Date.now();
+const pendingInboxNotionRefreshes = new Set<string>();
+const notionRefreshDelays = [2000, 5000, 10000];
+
+const scheduleInboxNotionRefresh = (item?: InboxItem | null) => {
+    if (!item?.uid || item.notion_url || pendingInboxNotionRefreshes.has(item.uid)) {
+        return;
+    }
+
+    pendingInboxNotionRefreshes.add(item.uid);
+
+    const refresh = async (attempt = 0) => {
+        try {
+            const refreshedItem = await fetchInboxItemByUid(item.uid!);
+            useStore.getState().inboxStore.updateInboxItem(refreshedItem);
+
+            if (refreshedItem.notion_url) {
+                pendingInboxNotionRefreshes.delete(item.uid!);
+                return;
+            }
+        } catch (error) {
+            console.error('Failed to refresh inbox Notion metadata:', error);
+        }
+
+        const nextDelay = notionRefreshDelays[attempt + 1];
+        if (nextDelay === undefined) {
+            pendingInboxNotionRefreshes.delete(item.uid!);
+            return;
+        }
+
+        window.setTimeout(() => refresh(attempt + 1), nextDelay);
+    };
+
+    window.setTimeout(() => refresh(), notionRefreshDelays[0]);
+};
 
 // Store-aware functions
 export const loadInboxItemsToStore = async (
@@ -220,6 +271,7 @@ export const createInboxItemWithStore = async (
     try {
         const newItem = await createInboxItem(content, source);
         inboxStore.addInboxItem(newItem);
+        scheduleInboxNotionRefresh(newItem);
         return newItem;
     } catch (error) {
         console.error('Failed to create inbox item:', error);
@@ -236,6 +288,7 @@ export const updateInboxItemWithStore = async (
     try {
         const updatedItem = await updateInboxItem(itemUid, content);
         inboxStore.updateInboxItem(updatedItem);
+        scheduleInboxNotionRefresh(updatedItem);
         return updatedItem;
     } catch (error) {
         console.error('Failed to update inbox item:', error);

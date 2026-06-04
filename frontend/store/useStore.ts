@@ -122,6 +122,41 @@ interface StoreState {
     habitsStore: HabitsStore;
 }
 
+const pendingTaskNotionRefreshes = new Set<string>();
+const notionRefreshDelays = [2000, 5000, 10000];
+
+const scheduleTaskNotionRefresh = (task?: Task | null) => {
+    if (!task?.uid || task.notion_url || pendingTaskNotionRefreshes.has(task.uid)) {
+        return;
+    }
+
+    pendingTaskNotionRefreshes.add(task.uid);
+
+    const refresh = async (attempt = 0) => {
+        try {
+            const refreshedTask =
+                await useStore.getState().tasksStore.loadTaskByUid(task.uid!);
+
+            if (refreshedTask.notion_url) {
+                pendingTaskNotionRefreshes.delete(task.uid!);
+                return;
+            }
+        } catch (error) {
+            console.error('Failed to refresh task Notion metadata:', error);
+        }
+
+        const nextDelay = notionRefreshDelays[attempt + 1];
+        if (nextDelay === undefined) {
+            pendingTaskNotionRefreshes.delete(task.uid!);
+            return;
+        }
+
+        window.setTimeout(() => refresh(attempt + 1), nextDelay);
+    };
+
+    window.setTimeout(() => refresh(), notionRefreshDelays[0]);
+};
+
 export const useStore = create<StoreState>((set: any) => ({
     notesStore: {
         notes: [],
@@ -389,6 +424,7 @@ export const useStore = create<StoreState>((set: any) => ({
                         tasks: [newTask, ...state.tasksStore.tasks],
                     },
                 }));
+                scheduleTaskNotionRefresh(newTask);
                 return newTask;
             } catch (error) {
                 console.error('createTask: Failed to create task:', error);
@@ -410,6 +446,7 @@ export const useStore = create<StoreState>((set: any) => ({
                         ),
                     },
                 }));
+                scheduleTaskNotionRefresh(updatedTask);
                 return updatedTask;
             } catch (error) {
                 console.error('updateTask: Failed to update task:', error);

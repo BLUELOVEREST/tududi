@@ -50,6 +50,89 @@ describe('notion sync service', () => {
         expect(result.synced).toBe(2);
     });
 
+    it('calls event-hub diff with bearer token', async () => {
+        process.env.EVENT_HUB_API_BASE_URL = 'http://event-hub:8090/api';
+        process.env.EVENT_HUB_API_TOKEN = 'api-token';
+        global.fetch.mockResolvedValue({
+            ok: true,
+            json: async () => ({
+                ok: true,
+                missing_in_tududi: 3,
+                missing_in_notion: 1,
+                failed: 2,
+            }),
+        });
+
+        const { diffSyncRecords } = require('../../../../modules/notion-sync/service');
+
+        const result = await diffSyncRecords({ limit: 200 });
+
+        expect(global.fetch).toHaveBeenCalledWith(
+            'http://event-hub:8090/api/sync/diff?limit=200',
+            {
+                method: 'POST',
+                headers: {
+                    Authorization: 'Bearer api-token',
+                },
+            }
+        );
+        expect(result.missing_in_tududi).toBe(3);
+    });
+
+    it('calls event-hub push with bearer token', async () => {
+        process.env.EVENT_HUB_API_BASE_URL = 'http://event-hub:8090/api';
+        process.env.EVENT_HUB_API_TOKEN = 'api-token';
+        global.fetch.mockResolvedValue({
+            ok: true,
+            json: async () => ({
+                ok: true,
+                total: 2,
+                synced: 2,
+                skipped: 0,
+                errors: [],
+            }),
+        });
+
+        const { pushTududiRecords } = require('../../../../modules/notion-sync/service');
+
+        const result = await pushTududiRecords({ limit: 200 });
+
+        expect(global.fetch).toHaveBeenCalledWith(
+            'http://event-hub:8090/api/sync/tududi/push?limit=200',
+            {
+                method: 'POST',
+                headers: {
+                    Authorization: 'Bearer api-token',
+                },
+            }
+        );
+        expect(result.synced).toBe(2);
+    });
+
+    it('calls event-hub retry with bearer token', async () => {
+        process.env.EVENT_HUB_API_BASE_URL = 'http://event-hub:8090/api';
+        process.env.EVENT_HUB_API_TOKEN = 'api-token';
+        global.fetch.mockResolvedValue({
+            ok: true,
+            json: async () => ({ ok: true }),
+        });
+
+        const { retryFailedRecords } = require('../../../../modules/notion-sync/service');
+
+        const result = await retryFailedRecords();
+
+        expect(global.fetch).toHaveBeenCalledWith(
+            'http://event-hub:8090/api/sync/retry',
+            {
+                method: 'POST',
+                headers: {
+                    Authorization: 'Bearer api-token',
+                },
+            }
+        );
+        expect(result.ok).toBe(true);
+    });
+
     it('requires event-hub API config', async () => {
         const {
             backfillNotionEvents,
