@@ -469,6 +469,24 @@ describe('Inbox Routes', () => {
             expect(emitTgHubWebhook).not.toHaveBeenCalled();
         });
 
+        it('should accept workspace Notion URLs', async () => {
+            const notionData = {
+                notion_page_id: 'page-id',
+                notion_url: 'https://blueloverest.notion.so/example',
+                notion_sync_status: 'synced',
+            };
+
+            const response = await agent
+                .patch(`/api/inbox/${inboxItem.uid}/notion`)
+                .send(notionData);
+
+            expect(response.status).toBe(200);
+            expect(response.body.notion_url).toBe(notionData.notion_url);
+
+            const reloaded = await InboxItem.findByPk(inboxItem.id);
+            expect(reloaded.notion_url).toBe(notionData.notion_url);
+        });
+
         it('should reject non-Notion URLs', async () => {
             const response = await agent
                 .patch(`/api/inbox/${inboxItem.uid}/notion`)

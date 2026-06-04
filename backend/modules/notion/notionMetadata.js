@@ -12,7 +12,22 @@ const NOTION_METADATA_FIELDS = [
 ];
 
 const NOTION_SYNC_STATUSES = ['pending', 'synced', 'error'];
-const NOTION_URL_PATTERN = /^https:\/\/(www\.)?notion\.so\//;
+const NOTION_URL_HOSTS = ['notion.so', 'notion.com', 'notion.site'];
+
+function isNotionUrl(value) {
+    try {
+        const url = new URL(value);
+        return (
+            url.protocol === 'https:' &&
+            NOTION_URL_HOSTS.some(
+                (host) =>
+                    url.hostname === host || url.hostname.endsWith(`.${host}`)
+            )
+        );
+    } catch (_error) {
+        return false;
+    }
+}
 
 function buildNotionMetadataUpdate(body = {}) {
     const update = {};
@@ -35,7 +50,7 @@ function buildNotionMetadataUpdate(body = {}) {
         update.notion_url !== undefined &&
         update.notion_url !== null &&
         update.notion_url !== '' &&
-        !NOTION_URL_PATTERN.test(update.notion_url)
+        !isNotionUrl(update.notion_url)
     ) {
         throw new ValidationError('Invalid Notion URL.');
     }
@@ -69,4 +84,5 @@ module.exports = {
     NOTION_METADATA_FIELDS,
     NOTION_SYNC_STATUSES,
     buildNotionMetadataUpdate,
+    isNotionUrl,
 };
