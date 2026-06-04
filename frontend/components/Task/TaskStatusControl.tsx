@@ -12,7 +12,7 @@ import {
     ArrowTopRightOnSquareIcon,
 } from '@heroicons/react/24/outline';
 import { useTranslation } from 'react-i18next';
-import { Task, StatusType } from '../../entities/Task';
+import { PriorityType, StatusType, Task } from '../../entities/Task';
 import {
     isTaskCompleted,
     isTaskInProgress,
@@ -23,6 +23,7 @@ import {
     getStatusBorderColorClasses,
     getStatusButtonColorClasses,
 } from './statusStyles';
+import PriorityQuickButton from '../Shared/PriorityQuickButton';
 
 type CompletionMenuTarget = 'desktop' | 'mobile';
 
@@ -190,6 +191,17 @@ const TaskStatusControl: React.FC<TaskStatusControlProps> = ({
     const handleNotionClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
         e.stopPropagation();
         setCompletionMenuOpen(null);
+    };
+
+    const handlePriorityChange = async (priority: PriorityType) => {
+        setCompletionMenuOpen(null);
+        if (onTaskUpdate && task.id) {
+            await onTaskUpdate({
+                ...task,
+                priority,
+                name: task.original_name || task.name,
+            });
+        }
     };
 
     const renderStatusMenuOptions = (menuType: CompletionMenuTarget) => {
@@ -432,6 +444,14 @@ const TaskStatusControl: React.FC<TaskStatusControlProps> = ({
                         />
                     </button>
                 )}
+                {onTaskUpdate && (
+                    <PriorityQuickButton
+                        value={task.priority}
+                        onChange={handlePriorityChange}
+                        buttonClassName={quickButtonClasses}
+                        iconClassName={iconSizeClass}
+                    />
+                )}
                 {showNotionButton && (
                     <a
                         href={task.notion_url!}
@@ -541,6 +561,14 @@ const TaskStatusControl: React.FC<TaskStatusControlProps> = ({
                                     className={`h-3.5 w-3.5 transition-all duration-300 ${isCompletingTask ? 'scale-125 text-green-600 dark:text-green-400' : ''}`}
                                 />
                             </button>
+                        )}
+                        {onTaskUpdate && (
+                            <PriorityQuickButton
+                                value={task.priority}
+                                onChange={handlePriorityChange}
+                                buttonClassName={`${completionButtonChevronClasses} ${statusButtonColorClasses} px-2 border-l ${statusBorderColorClass}`}
+                                iconClassName="h-3.5 w-3.5"
+                            />
                         )}
                         {showNotionButton && (
                             <a

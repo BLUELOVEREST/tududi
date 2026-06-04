@@ -61,10 +61,38 @@ function validateSource(source) {
     return source.trim();
 }
 
+function validatePriority(priority) {
+    if (priority === undefined) {
+        return undefined;
+    }
+
+    if (priority === null || priority === '') {
+        return null;
+    }
+
+    if (typeof priority === 'string') {
+        const priorityMap = {
+            low: 0,
+            medium: 1,
+            high: 2,
+        };
+        if (Object.prototype.hasOwnProperty.call(priorityMap, priority)) {
+            return priorityMap[priority];
+        }
+    }
+
+    if (Number.isInteger(priority) && priority >= 0 && priority <= 2) {
+        return priority;
+    }
+
+    throw new ValidationError('Priority must be low, medium, high, 0, 1, 2, or null');
+}
+
 module.exports = {
     validateContent,
     validateUid,
     buildTitleFromContent,
     validateSource,
+    validatePriority,
     TITLE_MAX_LENGTH,
 };

@@ -7,6 +7,7 @@ const {
     validateContent,
     validateUid,
     validateSource,
+    validatePriority,
     buildTitleFromContent,
 } = require('./validation');
 const { NotFoundError } = require('../../shared/errors');
@@ -99,15 +100,17 @@ class InboxService {
     /**
      * Create a new inbox item.
      */
-    async create(userId, { content, source, suppressWebhook = false }) {
+    async create(userId, { content, source, priority, suppressWebhook = false }) {
         const validatedContent = validateContent(content);
         const validatedSource = validateSource(source);
+        const validatedPriority = validatePriority(priority);
         const title = buildTitleFromContent(validatedContent);
 
         const item = await inboxRepository.createForUser(userId, {
             content: validatedContent,
             title,
             source: validatedSource,
+            priority: validatedPriority,
         });
 
         if (!suppressWebhook) {
@@ -120,7 +123,7 @@ class InboxService {
     /**
      * Update an inbox item.
      */
-    async update(userId, uid, { content, status, suppressWebhook = false }) {
+    async update(userId, uid, { content, status, priority, suppressWebhook = false }) {
         validateUid(uid);
 
         const item = await inboxRepository.findByUid(userId, uid);
@@ -139,6 +142,10 @@ class InboxService {
 
         if (status !== undefined && status !== null) {
             updateData.status = status;
+        }
+
+        if (priority !== undefined) {
+            updateData.priority = validatePriority(priority);
         }
 
         await inboxRepository.updateItem(item, updateData);

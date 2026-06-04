@@ -4,6 +4,7 @@ export interface InboxItem {
     content: string;
     title?: string | null;
     status?: string; // 'added' | 'processed' | 'deleted'
+    priority?: number | 'low' | 'medium' | 'high' | null;
     source?: string; // 'telegram'
     notion_page_id?: string | null;
     notion_url?: string | null;

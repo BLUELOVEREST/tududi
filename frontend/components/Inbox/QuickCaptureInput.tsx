@@ -6,7 +6,7 @@ import React, {
     useMemo,
     useImperativeHandle,
 } from 'react';
-import { Task } from '../../entities/Task';
+import { PriorityType, Task } from '../../entities/Task';
 import { Tag } from '../../entities/Tag';
 import { Project } from '../../entities/Project';
 import { Note } from '../../entities/Note';
@@ -32,6 +32,7 @@ import { getCsrfToken } from '../../utils/csrfService';
 import InboxSelectedChips from './InboxSelectedChips';
 import SuggestionsDropdown from './SuggestionsDropdown';
 import InboxCard from './InboxCard';
+import PriorityQuickButton from '../Shared/PriorityQuickButton';
 
 export interface QuickCaptureInputHandle {
     submit: (forceInbox?: boolean) => Promise<void>;
@@ -134,6 +135,8 @@ const QuickCaptureInput = React.forwardRef<
     ) => {
         const { t } = useTranslation();
         const [inputText, setInputText] = useState<string>(initialValue);
+        const [selectedPriority, setSelectedPriority] =
+            useState<PriorityType>(null);
         const [isSaving, setIsSaving] = useState(false);
         const { showSuccessToast, showErrorToast } = useToast();
         const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
@@ -1045,6 +1048,7 @@ const QuickCaptureInput = React.forwardRef<
                         await createMissingProjects(trimmedText);
                         await onSubmitOverride(trimmedText);
                         onAfterSubmit?.();
+                        setSelectedPriority(null);
                         setIsSaving(false);
                         return;
                     }
@@ -1087,7 +1091,7 @@ const QuickCaptureInput = React.forwardRef<
                         const newTask: Task = {
                             name: cleanedText,
                             status: 'not_started',
-                            priority: 'low',
+                            priority: selectedPriority,
                             tags: taskTags,
                             project_id: projectId,
                             completed_at: null,
@@ -1097,6 +1101,7 @@ const QuickCaptureInput = React.forwardRef<
                             await onTaskCreate(newTask);
                             showSuccessToast(t('task.createSuccess'));
                             setInputText('');
+                            setSelectedPriority(null);
                             setAnalysisResult(null);
                             if (inputRef.current) {
                                 inputRef.current.focus();
@@ -1177,6 +1182,7 @@ const QuickCaptureInput = React.forwardRef<
                                 )
                             );
                             setInputText('');
+                            setSelectedPriority(null);
                             setAnalysisResult(null);
                             if (inputRef.current) {
                                 inputRef.current.focus();
@@ -1197,9 +1203,14 @@ const QuickCaptureInput = React.forwardRef<
                     try {
                         await createMissingTags(trimmedText);
                         await createMissingProjects(trimmedText);
-                        await createInboxItemWithStore(trimmedText);
+                        await createInboxItemWithStore(
+                            trimmedText,
+                            undefined,
+                            selectedPriority
+                        );
                         showSuccessToast(t('inbox.itemAdded'));
                         setInputText('');
+                        setSelectedPriority(null);
                         setAnalysisResult(null);
                         if (inputRef.current) {
                             inputRef.current.focus();
@@ -1232,6 +1243,7 @@ const QuickCaptureInput = React.forwardRef<
                 projects,
                 onSubmitOverride,
                 onAfterSubmit,
+                selectedPriority,
             ]
         );
 
@@ -1280,7 +1292,7 @@ const QuickCaptureInput = React.forwardRef<
                                         const newTask: Task = {
                                             name: cleaned,
                                             status: 'not_started',
-                                            priority: null,
+                                            priority: selectedPriority,
                                             tags: taskTags,
                                             Project: projectUid
                                                 ? ({
@@ -1291,6 +1303,7 @@ const QuickCaptureInput = React.forwardRef<
                                         };
                                         void openTaskModal(newTask);
                                         composerFooterContext.clearText();
+                                        setSelectedPriority(null);
                                     }}
                                     className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-700 dark:text-blue-200 bg-blue-50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800 rounded-md hover:bg-blue-100 dark:hover:bg-blue-900/40 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-200 dark:focus:ring-offset-gray-900"
                                 >
@@ -2076,47 +2089,56 @@ const QuickCaptureInput = React.forwardRef<
                             })()}
                         </div>
                         {shouldShowPrimaryButton && (
-                            <button
-                                type="button"
-                                onClick={() => handleSubmit(false)}
-                                disabled={!inputText.trim() || isSaving}
-                                className={`flex-shrink-0 self-start mt-2 inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white rounded-lg shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:ring-offset-1 dark:focus:ring-offset-gray-800 transition-colors ${
-                                    inputText.trim() && !isSaving
-                                        ? 'bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600'
-                                        : 'bg-blue-400 dark:bg-blue-700 cursor-not-allowed'
-                                }`}
-                            >
-                                {isSaving ? (
-                                    <>
-                                        <svg
-                                            className="animate-spin h-3.5 w-3.5"
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <circle
-                                                className="opacity-25"
-                                                cx="12"
-                                                cy="12"
-                                                r="10"
-                                                stroke="currentColor"
-                                                strokeWidth="4"
-                                            ></circle>
-                                            <path
-                                                className="opacity-75"
-                                                fill="currentColor"
-                                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                            ></path>
-                                        </svg>
-                                        {t('common.saving')}
-                                    </>
-                                ) : (
-                                    <>
-                                        <PlusIcon className="h-3.5 w-3.5" />
-                                        {t('common.add', 'Add')}
-                                    </>
-                                )}
-                            </button>
+                            <div className="flex flex-shrink-0 items-center gap-2 self-start mt-2">
+                                <PriorityQuickButton
+                                    value={selectedPriority}
+                                    onChange={setSelectedPriority}
+                                    buttonClassName="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 shadow-sm transition hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800"
+                                    iconClassName="h-4 w-4"
+                                    stopPropagation={false}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => handleSubmit(false)}
+                                    disabled={!inputText.trim() || isSaving}
+                                    className={`inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white rounded-lg shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:ring-offset-1 dark:focus:ring-offset-gray-800 transition-colors ${
+                                        inputText.trim() && !isSaving
+                                            ? 'bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600'
+                                            : 'bg-blue-400 dark:bg-blue-700 cursor-not-allowed'
+                                    }`}
+                                >
+                                    {isSaving ? (
+                                        <>
+                                            <svg
+                                                className="animate-spin h-3.5 w-3.5"
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                fill="none"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <circle
+                                                    className="opacity-25"
+                                                    cx="12"
+                                                    cy="12"
+                                                    r="10"
+                                                    stroke="currentColor"
+                                                    strokeWidth="4"
+                                                ></circle>
+                                                <path
+                                                    className="opacity-75"
+                                                    fill="currentColor"
+                                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                                ></path>
+                                            </svg>
+                                            {t('common.saving')}
+                                        </>
+                                    ) : (
+                                        <>
+                                            <PlusIcon className="h-3.5 w-3.5" />
+                                            {t('common.add', 'Add')}
+                                        </>
+                                    )}
+                                </button>
+                            </div>
                         )}
                     </div>
                     {footerActions}

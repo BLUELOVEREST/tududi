@@ -375,7 +375,7 @@ const InboxItemDetail: React.FC<InboxItemDetailProps> = ({
             const newTask: Task = {
                 name: payload.cleanedContent || displayText,
                 status: 'not_started',
-                priority: null,
+                priority: item.priority ?? null,
                 tags: payload.tagObjects,
                 project_id: payload.projectId,
                 completed_at: null,

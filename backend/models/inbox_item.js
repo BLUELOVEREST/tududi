@@ -29,6 +29,15 @@ module.exports = (sequelize) => {
                 allowNull: false,
                 defaultValue: 'added',
             },
+            priority: {
+                type: DataTypes.INTEGER,
+                allowNull: true,
+                defaultValue: null,
+                validate: {
+                    min: 0,
+                    max: 2,
+                },
+            },
             source: {
                 type: DataTypes.STRING,
                 allowNull: false,

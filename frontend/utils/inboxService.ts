@@ -1,4 +1,5 @@
 import { InboxItem } from '../entities/InboxItem';
+import { PriorityType } from '../entities/Task';
 import { useStore } from '../store/useStore';
 import { handleAuthResponse, getPostHeadersWithCsrf } from './authUtils';
 import { getApiPath } from '../config/paths';
@@ -72,13 +73,26 @@ export const fetchInboxItemByUid = async (
 
 export const createInboxItem = async (
     content: string,
-    source?: string
+    source?: string,
+    priority?: PriorityType
 ): Promise<InboxItem> => {
+    const body: {
+        content: string;
+        source?: string;
+        priority?: PriorityType;
+    } = { content };
+    if (source) {
+        body.source = source;
+    }
+    if (priority !== undefined) {
+        body.priority = priority;
+    }
+
     const response = await fetch(getApiPath('inbox'), {
         method: 'POST',
         credentials: 'include',
         headers: await getPostHeadersWithCsrf(),
-        body: JSON.stringify(source ? { content, source } : { content }),
+        body: JSON.stringify(body),
     });
 
     await handleAuthResponse(response, 'Failed to create inbox item.');
@@ -87,13 +101,19 @@ export const createInboxItem = async (
 
 export const updateInboxItem = async (
     itemUid: string,
-    content: string
+    content: string,
+    priority?: PriorityType
 ): Promise<InboxItem> => {
+    const body: { content: string; priority?: PriorityType } = { content };
+    if (priority !== undefined) {
+        body.priority = priority;
+    }
+
     const response = await fetch(getApiPath(`inbox/${itemUid}`), {
         method: 'PATCH',
         credentials: 'include',
         headers: await getPostHeadersWithCsrf(),
-        body: JSON.stringify({ content }),
+        body: JSON.stringify(body),
     });
 
     await handleAuthResponse(response, 'Failed to update inbox item.');
@@ -264,12 +284,13 @@ export const loadMoreInboxItemsToStore = async (): Promise<void> => {
 
 export const createInboxItemWithStore = async (
     content: string,
-    source?: string
+    source?: string,
+    priority?: PriorityType
 ): Promise<InboxItem> => {
     const inboxStore = useStore.getState().inboxStore;
 
     try {
-        const newItem = await createInboxItem(content, source);
+        const newItem = await createInboxItem(content, source, priority);
         inboxStore.addInboxItem(newItem);
         scheduleInboxNotionRefresh(newItem);
         return newItem;
@@ -281,12 +302,13 @@ export const createInboxItemWithStore = async (
 
 export const updateInboxItemWithStore = async (
     itemUid: string,
-    content: string
+    content: string,
+    priority?: PriorityType
 ): Promise<InboxItem> => {
     const inboxStore = useStore.getState().inboxStore;
 
     try {
-        const updatedItem = await updateInboxItem(itemUid, content);
+        const updatedItem = await updateInboxItem(itemUid, content, priority);
         inboxStore.updateInboxItem(updatedItem);
         scheduleInboxNotionRefresh(updatedItem);
         return updatedItem;

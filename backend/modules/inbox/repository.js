@@ -8,6 +8,7 @@ const PUBLIC_ATTRIBUTES = [
     'title',
     'content',
     'status',
+    'priority',
     'source',
     'notion_page_id',
     'notion_url',
@@ -114,11 +115,12 @@ class InboxRepository extends BaseRepository {
     /**
      * Create a new inbox item for a user.
      */
-    async createForUser(userId, { content, title, source }) {
+    async createForUser(userId, { content, title, source, priority }) {
         return this.model.create({
             content,
             title,
             source,
+            priority,
             user_id: userId,
         });
     }

@@ -34,6 +34,7 @@ describe('Inbox Routes', () => {
             const inboxData = {
                 content: 'Remember to buy groceries',
                 source: 'web',
+                priority: 'high',
             };
 
             const response = await agent.post('/api/inbox').send(inboxData);
@@ -42,6 +43,7 @@ describe('Inbox Routes', () => {
             expect(response.body.content).toBe(inboxData.content);
             expect(response.body.source).toBe(inboxData.source);
             expect(response.body.status).toBe('added');
+            expect(response.body.priority).toBe(2);
             expect(response.body.uid).toBeDefined();
             expect(typeof response.body.uid).toBe('string');
             expect(emitTgHubWebhook).toHaveBeenCalledWith({
@@ -368,6 +370,7 @@ describe('Inbox Routes', () => {
             const updateData = {
                 content: 'Updated content',
                 status: 'processed',
+                priority: 'medium',
             };
 
             const response = await agent
@@ -377,6 +380,7 @@ describe('Inbox Routes', () => {
             expect(response.status).toBe(200);
             expect(response.body.content).toBe(updateData.content);
             expect(response.body.status).toBe(updateData.status);
+            expect(response.body.priority).toBe(1);
             expect(emitTgHubWebhook).toHaveBeenCalledWith({
                 entityType: 'inbox_item',
                 entityUid: inboxItem.uid,
