@@ -283,7 +283,11 @@ const Navbar: React.FC<NavbarProps> = ({
                         <BoltIcon className="h-4 w-4 text-white" />
                         <InboxIcon className="hidden md:inline-block ml-1.5 h-4 w-4 text-blue-200" />
                     </button>
-                    {pomodoroEnabled && <PomodoroTimer />}
+                    {pomodoroEnabled && (
+                        <div className="hidden md:block">
+                            <PomodoroTimer />
+                        </div>
+                    )}
 
                     <NotificationsDropdown isDarkMode={isDarkMode} />
 
