@@ -12,6 +12,7 @@ export interface Task {
     priority?: PriorityType | number;
     due_date?: string;
     defer_until?: string;
+    reminder_at?: string;
     note?: string;
     notion_page_id?: string | null;
     notion_url?: string | null;
