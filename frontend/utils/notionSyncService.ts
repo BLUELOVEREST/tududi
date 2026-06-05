@@ -44,13 +44,16 @@ const postNotionSync = async <T>(
 export const backfillNotionEvents = async ({
     limit = 200,
     dryRun = false,
+    forceUpdate = false,
 }: {
     limit?: number;
     dryRun?: boolean;
+    forceUpdate?: boolean;
 } = {}): Promise<NotionBackfillResult> => {
     return postNotionSync<NotionBackfillResult>('notion-sync/backfill', {
         limit,
         dry_run: dryRun,
+        force_update: forceUpdate,
     });
 };
 

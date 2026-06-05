@@ -50,6 +50,40 @@ describe('notion sync service', () => {
         expect(result.synced).toBe(2);
     });
 
+    it('passes force update to event-hub backfill', async () => {
+        process.env.EVENT_HUB_API_BASE_URL = 'http://event-hub:8090/api';
+        process.env.EVENT_HUB_API_TOKEN = 'api-token';
+        global.fetch.mockResolvedValue({
+            ok: true,
+            json: async () => ({
+                ok: true,
+                total: 19,
+                synced: 19,
+                skipped: 0,
+                errors: [],
+            }),
+        });
+
+        const {
+            backfillNotionEvents,
+        } = require('../../../../modules/notion-sync/service');
+
+        await backfillNotionEvents({
+            limit: 200,
+            forceUpdate: true,
+        });
+
+        expect(global.fetch).toHaveBeenCalledWith(
+            'http://event-hub:8090/api/sync/notion/backfill?limit=200&force_update=true',
+            {
+                method: 'POST',
+                headers: {
+                    Authorization: 'Bearer api-token',
+                },
+            }
+        );
+    });
+
     it('calls event-hub diff with bearer token', async () => {
         process.env.EVENT_HUB_API_BASE_URL = 'http://event-hub:8090/api';
         process.env.EVENT_HUB_API_TOKEN = 'api-token';

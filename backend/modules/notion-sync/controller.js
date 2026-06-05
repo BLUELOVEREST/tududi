@@ -19,6 +19,7 @@ const notionSyncController = {
             const result = await notionSyncService.backfillNotionEvents({
                 limit: req.body?.limit,
                 dryRun: req.body?.dry_run || req.body?.dryRun,
+                forceUpdate: req.body?.force_update || req.body?.forceUpdate,
             });
             res.json(result);
         } catch (error) {

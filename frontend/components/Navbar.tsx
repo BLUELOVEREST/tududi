@@ -225,7 +225,10 @@ const Navbar: React.FC<NavbarProps> = ({
     const handleImportFromNotion = async () => {
         setIsSyncing(true);
         try {
-            const result = await backfillNotionEvents({ limit: 200 });
+            const result = await backfillNotionEvents({
+                limit: 200,
+                forceUpdate: true,
+            });
             setSyncResult(result);
             showSuccessToast(
                 `Imported from Notion. ${formatSyncResult(result)}`

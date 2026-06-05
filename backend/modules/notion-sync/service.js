@@ -18,7 +18,7 @@ const buildEventHubUrl = (path, params = {}) => {
     return url.toString();
 };
 
-async function callEventHub(path, { limit, dryRun } = {}) {
+async function callEventHub(path, { limit, dryRun, forceUpdate } = {}) {
     const token = process.env.EVENT_HUB_API_TOKEN;
     if (!token) {
         const error = new Error('EVENT_HUB_API_TOKEN is not configured.');
@@ -33,6 +33,9 @@ async function callEventHub(path, { limit, dryRun } = {}) {
     }
     if (dryRun) {
         params.dry_run = 'true';
+    }
+    if (forceUpdate) {
+        params.force_update = 'true';
     }
     const url = buildEventHubUrl(path, params);
 
@@ -62,8 +65,16 @@ async function callEventHub(path, { limit, dryRun } = {}) {
     return body;
 }
 
-async function backfillNotionEvents({ limit = 200, dryRun = false } = {}) {
-    return callEventHub('/sync/notion/backfill', { limit, dryRun });
+async function backfillNotionEvents({
+    limit = 200,
+    dryRun = false,
+    forceUpdate = false,
+} = {}) {
+    return callEventHub('/sync/notion/backfill', {
+        limit,
+        dryRun,
+        forceUpdate,
+    });
 }
 
 async function diffSyncRecords({ limit = 200 } = {}) {
