@@ -18,6 +18,14 @@ import { isTaskCompleted, isTaskInProgress } from '../../constants/taskStatus';
 import TaskStatusControl from './TaskStatusControl';
 import { parseDateString, getTodayDateString, getTomorrowDateString, getYesterdayDateString } from '../../utils/dateUtils';
 
+const tagColorStyle = (color?: string): React.CSSProperties | undefined => {
+    if (!color) return undefined;
+    const r = parseInt(color.slice(1, 3), 16);
+    const g = parseInt(color.slice(3, 5), 16);
+    const b = parseInt(color.slice(5, 7), 16);
+    return { backgroundColor: `rgba(${r}, ${g}, ${b}, 0.2)`, color };
+};
+
 interface TaskHeaderProps {
     task: Task;
     project?: Project;
@@ -35,6 +43,8 @@ interface TaskHeaderProps {
     onDelete?: (e: React.MouseEvent) => void;
     isUpcomingView?: boolean;
     onMenuOpenChange?: (isOpen: boolean) => void;
+    hideStatusControl?: boolean;
+    isKanbanView?: boolean;
 }
 
 const TaskHeader: React.FC<TaskHeaderProps> = ({
@@ -53,6 +63,8 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
     onDelete: _onDelete,
     isUpcomingView = false,
     onMenuOpenChange,
+    hideStatusControl = false,
+    isKanbanView = false,
 }) => {
     const { t } = useTranslation();
     void _onToggleToday;
@@ -183,7 +195,7 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
             {/* Full view (md and larger) */}
             <div className="hidden md:flex flex-col md:flex-row md:items-center md:relative">
                 <div
-                    className={`flex items-center space-x-3 mb-2 md:mb-0 flex-1 min-w-0 ${!isUpcomingView ? 'pr-56' : ''}`}
+                    className={`flex items-center space-x-3 mb-2 md:mb-0 flex-1 min-w-0 ${!isUpcomingView && !hideStatusControl ? 'pr-56' : ''}`}
                 >
                     <div className="hidden">
                         <TaskPriorityIcon
@@ -230,7 +242,8 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
                                                           )}`
                                                     : `/project/${project.id}`
                                             }
-                                            className="text-gray-500 dark:text-gray-400 hover:underline transition-colors"
+                                            className="text-gray-500 dark:text-gray-400 hover:underline transition-colors max-w-[12rem] truncate"
+                                            title={project.name}
                                             onClick={(e) => {
                                                 // Prevent navigation if we're already on this project's page
                                                 if (
@@ -247,48 +260,23 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
                                     </div>
                                 )}
                                 {task.tags && task.tags.length > 0 && (
-                                    <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
-                                        <TagIcon className="h-3 w-3 mr-1" />
-                                        <span>
-                                            {task.tags.map((tag, index) => (
-                                                <React.Fragment key={tag.name}>
-                                                    <Link
-                                                        to={
-                                                            tag.uid
-                                                                ? `/tag/${tag.uid}-${tag.name
-                                                                      .toLowerCase()
-                                                                      .replace(
-                                                                          /[^a-z0-9]+/g,
-                                                                          '-'
-                                                                      )
-                                                                      .replace(
-                                                                          /^-|-$/g,
-                                                                          ''
-                                                                      )}`
-                                                                : `/tag/${tag.name
-                                                                      .toLowerCase()
-                                                                      .replace(
-                                                                          /[^a-z0-9]+/g,
-                                                                          '-'
-                                                                      )
-                                                                      .replace(
-                                                                          /^-|-$/g,
-                                                                          ''
-                                                                      )}`
-                                                        }
-                                                        className="text-gray-500 dark:text-gray-400 hover:underline transition-colors"
-                                                        onClick={(e) =>
-                                                            e.stopPropagation()
-                                                        }
-                                                    >
-                                                        {tag.name}
-                                                    </Link>
-                                                    {index <
-                                                        task.tags!.length - 1 &&
-                                                        ', '}
-                                                </React.Fragment>
-                                            ))}
-                                        </span>
+                                    <div className="flex items-center gap-1.5">
+                                        <TagIcon className="h-3 w-3 flex-shrink-0 text-gray-400 dark:text-gray-500" />
+                                        {task.tags.map((tag) => (
+                                            <Link
+                                                key={tag.uid || tag.name}
+                                                to={
+                                                    tag.uid
+                                                        ? `/tag/${tag.uid}-${tag.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`
+                                                        : `/tag/${tag.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`
+                                                }
+                                                className="inline-flex items-center px-2 py-px rounded-full text-[10px] font-medium transition-opacity hover:opacity-80 bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500"
+                                                style={tagColorStyle(tag.color)}
+                                                onClick={(e) => e.stopPropagation()}
+                                            >
+                                                {tag.name}
+                                            </Link>
+                                        ))}
                                     </div>
                                 )}
                             </div>
@@ -310,7 +298,7 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
                         )}
                         {/* Project, tags, due date, and recurrence in same row, with spacing when they exist */}
                         {!isUpcomingView && (
-                            <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap overflow-x-auto">
+                            <div className={`flex text-xs text-gray-500 dark:text-gray-400 ${isKanbanView ? 'flex-col space-y-0.5 mt-1.5' : 'items-center gap-3 whitespace-nowrap overflow-x-auto'}`}>
                                 {project && !hideProjectName && (
                                     <div className="flex items-center">
                                         <FolderIcon className="h-3 w-3 mr-1" />
@@ -329,7 +317,8 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
                                                           )}`
                                                     : `/project/${project.id}`
                                             }
-                                            className="text-gray-500 dark:text-gray-400 hover:underline transition-colors"
+                                            className="text-gray-500 dark:text-gray-400 hover:underline transition-colors max-w-[12rem] truncate"
+                                            title={project.name}
                                             onClick={(e) => {
                                                 // Prevent navigation if we're already on this project's page
                                                 if (
@@ -346,48 +335,23 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
                                     </div>
                                 )}
                                 {task.tags && task.tags.length > 0 && (
-                                    <div className="flex items-center">
-                                        <TagIcon className="h-3 w-3 mr-1" />
-                                        <span>
-                                            {task.tags.map((tag, index) => (
-                                                <React.Fragment key={tag.name}>
-                                                    <Link
-                                                        to={
-                                                            tag.uid
-                                                                ? `/tag/${tag.uid}-${tag.name
-                                                                      .toLowerCase()
-                                                                      .replace(
-                                                                          /[^a-z0-9]+/g,
-                                                                          '-'
-                                                                      )
-                                                                      .replace(
-                                                                          /^-|-$/g,
-                                                                          ''
-                                                                      )}`
-                                                                : `/tag/${tag.name
-                                                                      .toLowerCase()
-                                                                      .replace(
-                                                                          /[^a-z0-9]+/g,
-                                                                          '-'
-                                                                      )
-                                                                      .replace(
-                                                                          /^-|-$/g,
-                                                                          ''
-                                                                      )}`
-                                                        }
-                                                        className="text-gray-500 dark:text-gray-400 hover:underline transition-colors"
-                                                        onClick={(e) =>
-                                                            e.stopPropagation()
-                                                        }
-                                                    >
-                                                        {tag.name}
-                                                    </Link>
-                                                    {index <
-                                                        task.tags!.length - 1 &&
-                                                        ', '}
-                                                </React.Fragment>
-                                            ))}
-                                        </span>
+                                    <div className="flex items-center gap-1.5">
+                                        <TagIcon className="h-3 w-3 flex-shrink-0 text-gray-400 dark:text-gray-500" />
+                                        {task.tags.map((tag) => (
+                                            <Link
+                                                key={tag.uid || tag.name}
+                                                to={
+                                                    tag.uid
+                                                        ? `/tag/${tag.uid}-${tag.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`
+                                                        : `/tag/${tag.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`
+                                                }
+                                                className="inline-flex items-center px-2 py-px rounded-full text-[10px] font-medium transition-opacity hover:opacity-80 bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500"
+                                                style={tagColorStyle(tag.color)}
+                                                onClick={(e) => e.stopPropagation()}
+                                            >
+                                                {tag.name}
+                                            </Link>
+                                        ))}
                                     </div>
                                 )}
                                 {task.due_date && (
@@ -450,7 +414,7 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
                         )}
                     </div>
                 </div>
-                {!isUpcomingView && !task.habit_mode && onToggleCompletion && (
+                {!isUpcomingView && !task.habit_mode && !hideStatusControl && onToggleCompletion && (
                     <div className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center">
                         <TaskStatusControl
                             task={task}
@@ -515,7 +479,8 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
                                                       .replace(/^-|-$/g, '')}`
                                                 : `/project/${project.id}`
                                         }
-                                        className="text-gray-500 dark:text-gray-400 hover:underline transition-colors"
+                                        className="text-gray-500 dark:text-gray-400 hover:underline transition-colors max-w-[12rem] truncate"
+                                        title={project.name}
                                         onClick={(e) => {
                                             // Prevent navigation if we're already on this project's page
                                             if (
@@ -532,48 +497,23 @@ const TaskHeader: React.FC<TaskHeaderProps> = ({
                                 </div>
                             )}
                             {task.tags && task.tags.length > 0 && (
-                                <div className="flex items-center">
-                                    <TagIcon className="h-3 w-3 mr-1" />
-                                    <span>
-                                        {task.tags.map((tag, index) => (
-                                            <React.Fragment key={tag.name}>
-                                                <Link
-                                                    to={
-                                                        tag.uid
-                                                            ? `/tag/${tag.uid}-${tag.name
-                                                                  .toLowerCase()
-                                                                  .replace(
-                                                                      /[^a-z0-9]+/g,
-                                                                      '-'
-                                                                  )
-                                                                  .replace(
-                                                                      /^-|-$/g,
-                                                                      ''
-                                                                  )}`
-                                                            : `/tag/${tag.name
-                                                                  .toLowerCase()
-                                                                  .replace(
-                                                                      /[^a-z0-9]+/g,
-                                                                      '-'
-                                                                  )
-                                                                  .replace(
-                                                                      /^-|-$/g,
-                                                                      ''
-                                                                  )}`
-                                                    }
-                                                    className="text-gray-500 dark:text-gray-400 hover:underline transition-colors"
-                                                    onClick={(e) =>
-                                                        e.stopPropagation()
-                                                    }
-                                                >
-                                                    {tag.name}
-                                                </Link>
-                                                {index <
-                                                    task.tags!.length - 1 &&
-                                                    ', '}
-                                            </React.Fragment>
-                                        ))}
-                                    </span>
+                                <div className="flex items-center gap-1.5">
+                                    <TagIcon className="h-3 w-3 flex-shrink-0 text-gray-400 dark:text-gray-500" />
+                                    {task.tags.map((tag) => (
+                                        <Link
+                                            key={tag.uid || tag.name}
+                                            to={
+                                                tag.uid
+                                                    ? `/tag/${tag.uid}-${tag.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`
+                                                    : `/tag/${tag.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`
+                                            }
+                                            className="inline-flex items-center px-2 py-px rounded-full text-[10px] font-medium transition-opacity hover:opacity-80 bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500"
+                                            style={tagColorStyle(tag.color)}
+                                            onClick={(e) => e.stopPropagation()}
+                                        >
+                                            {tag.name}
+                                        </Link>
+                                    ))}
                                 </div>
                             )}
                             {!isUpcomingView && task.due_date && (

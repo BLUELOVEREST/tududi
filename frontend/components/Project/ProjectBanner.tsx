@@ -70,7 +70,16 @@ const ProjectBanner: React.FC<ProjectBannerProps> = ({
                         className="w-full h-[282px] object-cover"
                     />
                 ) : (
-                    <div className="w-full h-[282px] bg-gradient-to-br from-blue-500 to-purple-600 dark:from-blue-600 dark:to-purple-700"></div>
+                    <div
+                        className={`w-full h-[282px] ${!project.color ? 'bg-gradient-to-br from-blue-500 to-purple-600 dark:from-blue-600 dark:to-purple-700' : ''}`}
+                        style={project.color ? { backgroundColor: project.color } : undefined}
+                    />
+                )}
+                {project.color && (
+                    <div
+                        className="absolute top-4 left-4 w-8 h-8 rounded-full ring-1 ring-black/30 shadow-md select-none z-10"
+                        style={{ backgroundColor: project.color }}
+                    />
                 )}
 
                 {creatorName && (
@@ -152,20 +161,19 @@ const ProjectBanner: React.FC<ProjectBannerProps> = ({
                                 onClick={() => {
                                     const projectArea =
                                         project.area || (project as any).Area;
-                                    const area = areas.find(
-                                        (a) => a.id === projectArea.id
-                                    );
-                                    const areaUid = area?.uid;
+                                    const areaUid =
+                                        projectArea.uid ||
+                                        areas.find(
+                                            (a) => a.id === projectArea.id
+                                        )?.uid;
                                     if (!areaUid) return;
                                     const areaSlug = projectArea.name
                                         .toLowerCase()
                                         .replace(/[^a-z0-9]+/g, '-')
                                         .replace(/^-|-$/g, '');
-                                    navigate(
-                                        `/projects?area=${areaUid}-${areaSlug}`
-                                    );
+                                    navigate(`/area/${areaUid}-${areaSlug}`);
                                 }}
-                                className="text-xs text-white/90 hover:text-blue-200 transition-colors cursor-pointer font-medium"
+                                className="text-xs text-white/90 hover:text-white transition-colors cursor-pointer font-medium underline underline-offset-2"
                             >
                                 {(project.area || (project as any).Area)?.name}
                             </button>

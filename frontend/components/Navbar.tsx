@@ -63,9 +63,7 @@ const Navbar: React.FC<NavbarProps> = ({
     const [pomodoroEnabled, setPomodoroEnabled] = useState(true); // Default to true
     const [featureFlags, setFeatureFlags] = useState<FeatureFlags>({
         backups: false,
-        calendar: false,
         caldav: false,
-        habits: false,
         mcp: false,
     });
     const dropdownRef = useRef<HTMLDivElement>(null);
@@ -128,8 +126,8 @@ const Navbar: React.FC<NavbarProps> = ({
                 if (response.ok) {
                     const profile = await response.json();
                     setPomodoroEnabled(
-                        profile.pomodoro_enabled !== undefined
-                            ? profile.pomodoro_enabled
+                        profile.features?.pomodoro_enabled !== undefined
+                            ? profile.features.pomodoro_enabled
                             : true
                     );
                     // Set user timezone for date formatting

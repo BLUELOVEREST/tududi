@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { Location } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
@@ -7,11 +7,12 @@ import {
     ListBulletIcon,
     ClockIcon,
     CalendarIcon,
+    Squares2X2Icon,
+    ViewColumnsIcon,
 } from '@heroicons/react/24/solid';
 import { PlusCircleIcon } from '@heroicons/react/24/outline';
 import { useStore } from '../../store/useStore';
 import { loadInboxItemsToStore } from '../../utils/inboxService';
-import { getFeatureFlags, FeatureFlags } from '../../utils/featureFlags';
 
 interface SidebarNavProps {
     handleNavClick: (path: string, title: string, icon: JSX.Element) => void;
@@ -27,24 +28,14 @@ const SidebarNav: React.FC<SidebarNavProps> = ({
 }) => {
     const { t } = useTranslation();
     const store = useStore();
-    const [featureFlags, setFeatureFlags] = useState<FeatureFlags>({
-        backups: false,
-        calendar: false,
-        caldav: false,
-        habits: false,
-        mcp: false,
-    });
+    const eisenhowerEnabled = useStore((state) => state.userSettingsStore.eisenhowerEnabled);
+    const kanbanEnabled = useStore((state) => state.userSettingsStore.kanbanEnabled);
+    const calendarEnabled = useStore((state) => state.userSettingsStore.calendarEnabled);
 
     const inboxItemsCount = store.inboxStore.pagination.total;
 
     useEffect(() => {
         loadInboxItemsToStore(false).catch(console.error);
-
-        const fetchFlags = async () => {
-            const flags = await getFeatureFlags();
-            setFeatureFlags(flags);
-        };
-        fetchFlags();
     }, []);
 
     const allNavLinks = [
@@ -68,7 +59,7 @@ const SidebarNav: React.FC<SidebarNavProps> = ({
             path: '/calendar',
             title: t('sidebar.calendar', 'Calendar'),
             icon: <CalendarIcon className="h-5 w-5" />,
-            featureFlag: 'calendar',
+            userFlag: 'calendar',
         },
         {
             path: '/tasks?status=active',
@@ -76,17 +67,35 @@ const SidebarNav: React.FC<SidebarNavProps> = ({
             icon: <ListBulletIcon className="h-5 w-5" />,
             query: 'status=active',
         },
+        {
+            path: '/eisenhower',
+            title: t('sidebar.eisenhower', 'Eisenhower Matrix'),
+            icon: <Squares2X2Icon className="h-5 w-5" />,
+            userFlag: 'eisenhower',
+        },
+        {
+            path: '/kanban',
+            title: t('sidebar.kanban', 'Kanban Board'),
+            icon: <ViewColumnsIcon className="h-5 w-5" />,
+            userFlag: 'kanban',
+        },
     ];
 
     const navLinks = allNavLinks.filter((link) => {
-        if (link.featureFlag) {
-            return featureFlags[link.featureFlag as keyof FeatureFlags];
+        if (link.userFlag === 'eisenhower') {
+            return eisenhowerEnabled;
+        }
+        if (link.userFlag === 'kanban') {
+            return kanbanEnabled;
+        }
+        if (link.userFlag === 'calendar') {
+            return calendarEnabled;
         }
         return true;
     });
 
     const isActive = (path: string, query?: string) => {
-        if (path === '/inbox' || path === '/today' || path === '/calendar') {
+        if (path === '/inbox' || path === '/today' || path === '/calendar' || path === '/eisenhower' || path === '/kanban') {
             const isPathMatch = location.pathname === path;
             return isPathMatch
                 ? 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white'

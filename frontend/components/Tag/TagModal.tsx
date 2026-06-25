@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Tag } from '../../entities/Tag';
 import { TrashIcon } from '@heroicons/react/24/outline';
+import { MapPinIcon } from '@heroicons/react/24/solid';
 import { useToast } from '../Shared/ToastContext';
 import { useTranslation } from 'react-i18next';
 import DiscardChangesDialog from '../Shared/DiscardChangesDialog';
+import ColorPicker from '../Shared/ColorPicker';
 
 interface TagModalProps {
     isOpen: boolean;
@@ -146,12 +148,9 @@ const TagModal: React.FC<TagModalProps> = ({
     // Check if there are unsaved changes
     const hasUnsavedChanges = () => {
         if (!tag) {
-            // New tag - check if name has been filled
-            return formData.name.trim() !== '';
+            return formData.name.trim() !== '' || !!formData.color;
         }
-
-        // Existing tag - compare with original
-        return formData.name !== tag.name;
+        return formData.name !== tag.name || formData.pinned !== tag.pinned || formData.color !== tag.color;
     };
 
     // Use ref to store hasUnsavedChanges so it's always current in the event handler
@@ -220,7 +219,7 @@ const TagModal: React.FC<TagModalProps> = ({
                             >
                                 <fieldset>
                                     {/* Tag Title Section - Always Visible */}
-                                    <div className="px-4 pt-4 pb-4">
+                                    <div className="px-4 pt-4 pb-2">
                                         <input
                                             ref={nameInputRef}
                                             type="text"
@@ -229,12 +228,56 @@ const TagModal: React.FC<TagModalProps> = ({
                                             value={formData.name}
                                             onChange={handleChange}
                                             required
-                                            className="block w-full text-xl font-semibold bg-transparent text-black dark:text-white border-none focus:outline-none shadow-sm py-2"
+                                            readOnly={tag?.tag_type === 'system'}
+                                            className={`block w-full text-xl font-semibold bg-transparent text-black dark:text-white border-none focus:outline-none shadow-sm py-2 ${
+                                                tag?.tag_type === 'system'
+                                                    ? 'cursor-default opacity-70'
+                                                    : ''
+                                            }`}
                                             placeholder={t(
                                                 'forms.tagNamePlaceholder',
                                                 'Enter tag name'
                                             )}
                                             data-testid="tag-name-input"
+                                        />
+                                    </div>
+                                    {/* Pinned toggle */}
+                                    <div className="px-4 pb-4">
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                setFormData((prev) => ({
+                                                    ...prev,
+                                                    pinned: !prev.pinned,
+                                                }))
+                                            }
+                                            className={`flex items-center gap-2 text-sm rounded-md px-3 py-1.5 transition-colors duration-150 ${
+                                                formData.pinned
+                                                    ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-300 dark:border-blue-700'
+                                                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-600'
+                                            }`}
+                                            data-testid="tag-pin-toggle"
+                                        >
+                                            <MapPinIcon className="h-3.5 w-3.5" />
+                                            {formData.pinned
+                                                ? t('tags.pinned', 'Pinned for quick access')
+                                                : t('tags.pinTag', 'Pin for quick access')}
+                                        </button>
+                                    </div>
+
+                                    {/* Color picker */}
+                                    <div className="border-t border-gray-200 dark:border-gray-700 px-4 pt-4 pb-4">
+                                        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                                            {t('forms.color', 'Color')}
+                                        </h3>
+                                        <ColorPicker
+                                            value={formData.color || ''}
+                                            onChange={(color) =>
+                                                setFormData((prev) => ({
+                                                    ...prev,
+                                                    color: color || undefined,
+                                                }))
+                                            }
                                         />
                                     </div>
                                 </fieldset>
@@ -245,7 +288,7 @@ const TagModal: React.FC<TagModalProps> = ({
                         <div className="flex-shrink-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-3 py-2 flex items-center justify-between sm:rounded-b-lg">
                             {/* Left side: Delete and Cancel */}
                             <div className="flex items-center space-x-3">
-                                {tag && tag.uid && onDelete && (
+                                {tag && tag.uid && onDelete && tag.tag_type !== 'system' && (
                                     <button
                                         type="button"
                                         onClick={handleDeleteTag}

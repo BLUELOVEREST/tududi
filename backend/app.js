@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const path = require('path');
+const fs = require('fs');
 const cors = require('cors');
 const helmet = require('helmet');
 const compression = require('compression');
@@ -15,6 +16,8 @@ const taskScheduler = require('./modules/tasks/taskScheduler');
 const { initializeEmailService } = require('./services/emailService');
 const { setConfig, getConfig } = require('./config/config');
 const config = getConfig();
+const distIndexPath = path.join(__dirname, 'dist', 'index.html');
+const serveFromDist = config.production || fs.existsSync(distIndexPath);
 const API_VERSION = process.env.API_VERSION || 'v1';
 const API_BASE_PATH = `/api/${API_VERSION}`;
 
@@ -101,6 +104,7 @@ app.use(
             'Content-Type',
             'Accept',
             'X-Requested-With',
+            'x-csrf-token',
             'Depth',
             'If-Match',
             'If-None-Match',
@@ -189,14 +193,14 @@ app.use((req, res, next) => {
 });
 
 // Static files
-if (config.production) {
+if (serveFromDist) {
     app.use(express.static(path.join(__dirname, 'dist')));
 } else {
     app.use(express.static('public'));
 }
 
 // Serve locales
-if (config.production) {
+if (serveFromDist) {
     app.use('/locales', express.static(path.join(__dirname, 'dist/locales')));
 } else {
     app.use(
@@ -231,6 +235,7 @@ const errorHandler = require('./shared/middleware/errorHandler');
 // Modular routes
 const adminModule = require('./modules/admin');
 const areasModule = require('./modules/areas');
+const goalsModule = require('./modules/goals');
 const authModule = require('./modules/auth');
 const backupModule = require('./modules/backup');
 const featureFlagsModule = require('./modules/feature-flags');
@@ -322,6 +327,7 @@ const registerApiRoutes = (basePath) => {
     app.use(basePath, adminModule.routes);
     app.use(basePath, sharesModule.routes);
     app.use(basePath, areasModule.routes);
+    app.use(basePath, goalsModule.routes);
     app.use(basePath, notesModule.routes);
     app.use(basePath, tagsModule.routes);
     app.use(basePath, usersModule.routes);
@@ -351,7 +357,7 @@ app.get('*', (req, res) => {
         !req.path.startsWith('/api/') &&
         !req.path.match(/\.(js|css|png|jpg|jpeg|gif|ico|svg)$/)
     ) {
-        if (config.production) {
+        if (serveFromDist) {
             res.sendFile(path.join(__dirname, 'dist', 'index.html'));
         } else {
             res.sendFile(path.join(__dirname, '../public', 'index.html'));

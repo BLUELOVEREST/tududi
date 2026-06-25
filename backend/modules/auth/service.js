@@ -133,10 +133,19 @@ class AuthService {
                     'appearance',
                     'timezone',
                     'avatar_image',
+                    'features',
                 ],
             });
             if (user) {
                 const admin = await isAdmin(user.uid);
+                let features = user.features;
+                if (features && typeof features === 'string') {
+                    try {
+                        features = JSON.parse(features);
+                    } catch {
+                        features = {};
+                    }
+                }
                 return {
                     user: {
                         uid: user.uid,
@@ -147,6 +156,7 @@ class AuthService {
                         appearance: user.appearance,
                         timezone: user.timezone,
                         avatar_image: user.avatar_image,
+                        features: features || {},
                         is_admin: admin,
                     },
                 };

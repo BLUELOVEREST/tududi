@@ -78,19 +78,29 @@ const CalDAVOccurrenceOverride = require('./caldav_occurrence_override')(
 );
 const CalDAVRemoteCalendar = require('./caldav_remote_calendar')(sequelize);
 const CalendarToken = require('./calendar_token')(sequelize);
+const Goal = require('./goal')(sequelize);
 
 User.hasMany(Area, { foreignKey: 'user_id' });
 Area.belongsTo(User, { foreignKey: 'user_id' });
+
+User.hasMany(Goal, { foreignKey: 'user_id', as: 'Goals' });
+Goal.belongsTo(User, { foreignKey: 'user_id' });
+Area.hasMany(Goal, { foreignKey: 'area_id', as: 'Goals' });
+Goal.belongsTo(Area, { foreignKey: 'area_id' });
+Goal.hasMany(Project, { foreignKey: 'goal_id', as: 'Projects' });
 
 User.hasMany(Project, { foreignKey: 'user_id' });
 Project.belongsTo(User, { foreignKey: 'user_id' });
 Project.belongsTo(Area, { foreignKey: 'area_id', allowNull: true });
 Area.hasMany(Project, { foreignKey: 'area_id' });
+Project.belongsTo(Goal, { foreignKey: 'goal_id', allowNull: true, as: 'Goal' });
 
 User.hasMany(Task, { foreignKey: 'user_id' });
 Task.belongsTo(User, { foreignKey: 'user_id' });
 Task.belongsTo(Project, { foreignKey: 'project_id', allowNull: true });
 Project.hasMany(Task, { foreignKey: 'project_id' });
+Task.belongsTo(Area, { foreignKey: 'area_id', allowNull: true });
+Area.hasMany(Task, { foreignKey: 'area_id' });
 
 User.hasMany(Tag, { foreignKey: 'user_id' });
 Tag.belongsTo(User, { foreignKey: 'user_id' });
@@ -261,10 +271,23 @@ User.hasMany(CalendarToken, {
 });
 CalendarToken.belongsTo(User, { foreignKey: 'user_id', as: 'User' });
 
+// Seed system tags for every new user
+User.addHook('afterCreate', async (user) => {
+    try {
+        const { seedSystemTagsForUser } = require('../modules/tags/systemTags');
+        await seedSystemTagsForUser(user.id);
+    } catch (err) {
+        // Non-fatal: system tags can be seeded via migration if this fails
+        const { logError } = require('../services/logService');
+        logError(err, `Failed to seed system tags for user ${user.id}`);
+    }
+});
+
 module.exports = {
     sequelize,
     User,
     Area,
+    Goal,
     Project,
     Task,
     Tag,

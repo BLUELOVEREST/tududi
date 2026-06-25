@@ -54,6 +54,8 @@
     "inbox": "Inbox",
     "completed": "Completed",
     "allTasks": "All Tasks",
+    "eisenhower": "Eisenhower Matrix",
+    "kanban": "Kanban Board",
     "unpinView": "Unpin view",
     "pinView": "Pin view"
   },
@@ -140,7 +142,32 @@
     "groupBy": "Group by",
     "groupByProject": "Project",
     "grouping": {
-      "none": "None"
+      "none": "None",
+      "eisenhower": "Eisenhower Matrix"
+    },
+    "eisenhower": {
+      "doNow": "Do Now",
+      "doNowDesc": "Important & Urgent",
+      "schedule": "Schedule",
+      "scheduleDesc": "Important, Not Urgent",
+      "delegate": "Delegate",
+      "delegateDesc": "Urgent, Not Important",
+      "eliminate": "Eliminate",
+      "eliminateDesc": "Not Important, Not Urgent",
+      "urgent": "Urgent",
+      "notUrgent": "Not Urgent",
+      "important": "Important",
+      "notImportant": "Not Important",
+      "dropHere": "Drop here",
+      "urgentHint": "Tag tasks with 'urgent' to mark them as urgent"
+    },
+    "kanban": {
+      "title": "Kanban Board",
+      "todo": "To Do",
+      "inProgress": "In Progress",
+      "waiting": "Waiting",
+      "done": "Done",
+      "dropHere": "Drop here"
     },
     "show": "Show",
     "open": "Open",
@@ -307,6 +334,7 @@
     "enableAutoSuggestNextActions": "Enable Next Action Prompts",
     "productivityFeatures": "Productivity Features",
     "pomodoroDescription": "Enable the Pomodoro timer in the navigation bar for focused work sessions.",
+    "kanbanDescription": "Enable the Kanban Board for tracking task progress across swimlanes.",
     "enablePomodoro": "Enable Pomodoro Timer",
     "productivityAssistant": "Productivity Assistant",
     "productivityAssistantDescription": "Show productivity insights that help identify stalled projects, vague tasks, and workflow improvements on your Today page.",
@@ -338,6 +366,12 @@
     "addNextAction": "Add Next Action",
     "skipNextAction": "Skip for now",
     "nextActionHint": "Think of the smallest, most concrete step you can take right now to move this project forward.",
+    "intelligenceSection": "Intelligence",
+    "taskIntelligenceLabel": "Task Intelligence Assistant",
+    "autoSuggestNextActionsLabel": "Next Action Prompts",
+    "productivityAssistantLabel": "Productivity Insights",
+    "nextTaskSuggestionLabel": "Next Task Suggestions",
+    "featuresAddons": "Features & Add-ons",
     "tabs": {
       "notifications": "Notification Preferences",
       "oidc": "OIDC/SSO",
@@ -995,7 +1029,11 @@
       "inactive": "Inactive",
       "all": "All",
       "allAreas": "All Areas",
-      "notCompleted": "Not Completed"
+      "notCompleted": "Not Completed",
+      "someday": "Someday",
+      "somedayTooltip": "Projects tagged \"someday\" are hidden by default. Click to reveal them.",
+      "systemTagCannotBeDeleted": "System tags cannot be deleted",
+      "systemTagCannotBeRenamed": "System tags cannot be renamed"
     }
   },
   "projectStatus": {
@@ -1060,6 +1098,10 @@
     "searchPlaceholder": "Search tags...",
     "title": "Tags",
     "noTagsFound": "No tags found",
+    "systemTag": "System tags",
+    "systemTagDescription": "Created automatically by the app. They power built-in features and cannot be renamed or deleted.",
+    "userTag": "User tags",
+    "userTagDescription": "Your own tags for organising tasks, notes, and projects.",
     "editTagAriaLabel": "Edit tag {{tagName}}",
     "editTagTitle": "Edit tag {{tagName}}",
     "deleteTagAriaLabel": "Delete tag {{tagName}}",

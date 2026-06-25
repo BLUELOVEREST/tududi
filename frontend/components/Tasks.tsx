@@ -21,6 +21,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { getApiPath } from '../config/paths';
 import { getCsrfToken } from '../utils/csrfService';
+import { isTaskActive } from '../constants/taskStatus';
 
 const capitalize = (str: string) => str.charAt(0).toUpperCase() + str.slice(1);
 
@@ -96,14 +97,9 @@ const Tasks: React.FC = () => {
                 return isCompleted;
             });
         } else if (status === 'active') {
-            filteredTasks = filteredTasks.filter((task: Task) => {
-                const isCompleted =
-                    task.status === 'done' ||
-                    task.status === 'archived' ||
-                    task.status === 2 ||
-                    task.status === 3;
-                return !isCompleted;
-            });
+            filteredTasks = filteredTasks.filter((task: Task) =>
+                isTaskActive(task.status)
+            );
         }
 
         if (taskSearchQuery.trim() && !isUpcomingView) {
@@ -637,16 +633,12 @@ const Tasks: React.FC = () => {
                                                 {t('tasks.groupBy', 'Group by')}
                                             </div>
                                             <div className="py-1">
-                                                {['none', 'project'].map(
+                                                {(['none', 'project'] as const).map(
                                                     (val) => (
                                                         <button
                                                             key={val}
                                                             onClick={() => {
-                                                                setGroupBy(
-                                                                    val as
-                                                                        | 'none'
-                                                                        | 'project'
-                                                                );
+                                                                setGroupBy(val);
                                                                 localStorage.setItem(
                                                                     'tasks_group_by',
                                                                     val
@@ -659,19 +651,11 @@ const Tasks: React.FC = () => {
                                                             }`}
                                                         >
                                                             <span>
-                                                                {val ===
-                                                                'project'
-                                                                    ? t(
-                                                                          'tasks.groupByProject',
-                                                                          'Project'
-                                                                      )
-                                                                    : t(
-                                                                          'tasks.grouping.none',
-                                                                          'None'
-                                                                      )}
+                                                                {val === 'project'
+                                                                    ? t('tasks.groupByProject', 'Project')
+                                                                    : t('tasks.grouping.none', 'None')}
                                                             </span>
-                                                            {groupBy ===
-                                                                val && (
+                                                            {groupBy === val && (
                                                                 <CheckIcon className="h-4 w-4" />
                                                             )}
                                                         </button>
@@ -984,7 +968,7 @@ const Tasks: React.FC = () => {
                                     <GroupedTaskList
                                         tasks={displayTasks}
                                         groupedTasks={null}
-                                        groupBy="project"
+                                        groupBy={groupBy}
                                         onTaskCreate={handleTaskCreate}
                                         onTaskUpdate={handleTaskUpdate}
                                         onTaskCompletionToggle={

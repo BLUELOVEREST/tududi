@@ -1,4 +1,4 @@
-const { Task, Tag, Project, sequelize } = require('../../../models');
+const { Task, Tag, Project, Area, sequelize } = require('../../../models');
 const { Op, QueryTypes } = require('sequelize');
 const permissionsService = require('../../../services/permissionsService');
 const {
@@ -80,7 +80,7 @@ async function filterTasksByParams(
     let includeClause = [
         {
             model: Tag,
-            attributes: ['id', 'name', 'uid'],
+            attributes: ['id', 'name', 'uid', 'color'],
             through: { attributes: [] },
         },
         {
@@ -89,12 +89,17 @@ async function filterTasksByParams(
             required: false,
         },
         {
+            model: Area,
+            attributes: ['id', 'name', 'uid', 'color'],
+            required: false,
+        },
+        {
             model: Task,
             as: 'Subtasks',
             include: [
                 {
                     model: Tag,
-                    attributes: ['id', 'name', 'uid'],
+                    attributes: ['id', 'name', 'uid', 'color'],
                     through: { attributes: [] },
                     required: false,
                 },
@@ -249,8 +254,10 @@ async function filterTasksByParams(
                     [Op.notIn]: [
                         Task.STATUS.DONE,
                         Task.STATUS.ARCHIVED,
+                        Task.STATUS.CANCELLED,
                         'done',
                         'archived',
+                        'cancelled',
                     ],
                 };
             } else if (!params.client_side_filtering) {
@@ -290,8 +297,10 @@ async function filterTasksByParams(
                     [Op.notIn]: [
                         Task.STATUS.DONE,
                         Task.STATUS.ARCHIVED,
+                        Task.STATUS.CANCELLED,
                         'done',
                         'archived',
+                        'cancelled',
                     ],
                 };
             } else if (!params.client_side_filtering) {
@@ -316,8 +325,10 @@ async function filterTasksByParams(
                     [Op.notIn]: [
                         Task.STATUS.DONE,
                         Task.STATUS.ARCHIVED,
+                        Task.STATUS.CANCELLED,
                         'done',
                         'archived',
+                        'cancelled',
                     ],
                 };
             } else if (params.status === 'all') {
@@ -405,6 +416,10 @@ async function filterTasksByParams(
         };
     }
 
+    if (params.area_id) {
+        whereClause.area_id = params.area_id;
+    }
+
     const finalWhereClause = {
         [Op.and]: [ownedOrShared, whereClause],
     };
@@ -421,7 +436,7 @@ function getTaskIncludeConfig() {
     return [
         {
             model: Tag,
-            attributes: ['id', 'name', 'uid'],
+            attributes: ['id', 'name', 'uid', 'color'],
             through: { attributes: [] },
             required: false,
         },
@@ -431,12 +446,17 @@ function getTaskIncludeConfig() {
             required: false,
         },
         {
+            model: Area,
+            attributes: ['id', 'name', 'uid', 'color'],
+            required: false,
+        },
+        {
             model: Task,
             as: 'Subtasks',
             include: [
                 {
                     model: Tag,
-                    attributes: ['id', 'name', 'uid'],
+                    attributes: ['id', 'name', 'uid', 'color'],
                     through: { attributes: [] },
                     required: false,
                 },
@@ -456,13 +476,18 @@ function getTaskIncludeConfigLight() {
     return [
         {
             model: Tag,
-            attributes: ['id', 'name', 'uid'],
+            attributes: ['id', 'name', 'uid', 'color'],
             through: { attributes: [] },
             required: false,
         },
         {
             model: Project,
             attributes: ['id', 'name', 'status', 'uid'],
+            required: false,
+        },
+        {
+            model: Area,
+            attributes: ['id', 'name', 'uid', 'color'],
             required: false,
         },
     ];

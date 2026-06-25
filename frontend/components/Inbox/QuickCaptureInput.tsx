@@ -44,6 +44,7 @@ export interface InboxComposerFooterContext {
     hashtags: string[];
     projectRefs: string[];
     clearText: () => void;
+    updateText: (value: string) => void;
 }
 
 interface QuickCaptureInputProps {
@@ -176,6 +177,7 @@ const QuickCaptureInput = React.forwardRef<
         const [urlPreviewImageError, setUrlPreviewImageError] = useState(false);
         const urlPreviewRequestIdRef = useRef(0);
         const dismissedPreviewUrlRef = useRef<string | null>(null);
+        const lastAnalyzedTextRef = useRef<string>('');
 
         const isEditMode = mode === 'edit';
 
@@ -740,7 +742,7 @@ const QuickCaptureInput = React.forwardRef<
         };
 
         const getAllTags = (text: string): string[] => {
-            if (analysisResult) {
+            if (analysisResult && lastAnalyzedTextRef.current === text.trim()) {
                 const explicitTags = analysisResult.parsed_tags;
 
                 const isUrlContent =
@@ -773,7 +775,7 @@ const QuickCaptureInput = React.forwardRef<
         };
 
         const getAllProjects = (text: string): string[] => {
-            if (analysisResult) {
+            if (analysisResult && lastAnalyzedTextRef.current === text.trim()) {
                 return analysisResult.parsed_projects;
             }
 
@@ -781,7 +783,7 @@ const QuickCaptureInput = React.forwardRef<
         };
 
         const getCleanedContent = (text: string): string => {
-            if (analysisResult) {
+            if (analysisResult && lastAnalyzedTextRef.current === text) {
                 return analysisResult.cleaned_content;
             }
 
@@ -883,12 +885,14 @@ const QuickCaptureInput = React.forwardRef<
                     if (response.ok) {
                         const result = await response.json();
                         setAnalysisResult(result);
+                        lastAnalyzedTextRef.current = text;
                     } else {
                         console.error(
                             'Failed to analyze text:',
                             response.statusText
                         );
                         setAnalysisResult(null);
+                        lastAnalyzedTextRef.current = '';
                     }
                 } catch (error) {
                     if (analysisRequestIdRef.current !== requestId) {
@@ -896,6 +900,7 @@ const QuickCaptureInput = React.forwardRef<
                     }
                     console.error('Error analyzing text:', error);
                     setAnalysisResult(null);
+                    lastAnalyzedTextRef.current = '';
                 } finally {
                     if (analysisRequestIdRef.current === requestId) {
                         setIsAnalyzing(false);
@@ -1297,7 +1302,7 @@ const QuickCaptureInput = React.forwardRef<
                     updateText: (value: string) => setInputText(value),
                 };
             },
-            [getComposedInputText, clearComposerText]
+            [getComposedInputText, clearComposerText, analysisResult]
         );
 
         const defaultFooterActions =

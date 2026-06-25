@@ -70,6 +70,10 @@ module.exports = (sequelize) => {
                 type: DataTypes.TEXT,
                 allowNull: true,
             },
+            color: {
+                type: DataTypes.STRING,
+                allowNull: true,
+            },
             task_show_completed: {
                 type: DataTypes.BOOLEAN,
                 allowNull: true,
@@ -79,6 +83,19 @@ module.exports = (sequelize) => {
                 type: DataTypes.STRING,
                 allowNull: true,
                 defaultValue: 'created_at:desc',
+            },
+            goal_id: {
+                type: DataTypes.INTEGER,
+                allowNull: true,
+                references: {
+                    model: 'goals',
+                    key: 'id',
+                },
+            },
+            is_maintenance: {
+                type: DataTypes.BOOLEAN,
+                allowNull: false,
+                defaultValue: false,
             },
             status: {
                 type: DataTypes.ENUM(
@@ -101,6 +118,9 @@ module.exports = (sequelize) => {
                 },
                 {
                     fields: ['area_id'],
+                },
+                {
+                    fields: ['goal_id'],
                 },
             ],
         }

@@ -679,7 +679,7 @@ describe('MCP Tools Integration', () => {
         });
 
         describe('list_tags', () => {
-            it('should return empty list when no tags exist', async () => {
+            it('should return only system tags when no user tags exist', async () => {
                 const response = await callMcpTool(
                     apiTokenValue,
                     'list_tags',
@@ -688,7 +688,10 @@ describe('MCP Tools Integration', () => {
 
                 expect(response.status).toBe(200);
                 const { content } = getToolContent(response);
-                expect(content.count).toBe(0);
+                // 'someday' and 'today' system tags are auto-created for every new user
+                expect(content.count).toBe(2);
+                expect(content.tags.map((t) => t.name)).toContain('someday');
+                expect(content.tags.map((t) => t.name)).toContain('today');
             });
 
             it('should return user tags', async () => {

@@ -6,6 +6,7 @@ const {
     Task,
     Tag,
     Area,
+    Goal,
     Note,
     User,
     Permission,
@@ -44,11 +45,25 @@ class ProjectsRepository extends BaseRepository {
                 {
                     model: Area,
                     required: false,
-                    attributes: ['id', 'uid', 'name'],
+                    attributes: ['id', 'uid', 'name', 'color'],
+                },
+                {
+                    model: Goal,
+                    as: 'Goal',
+                    required: false,
+                    attributes: [
+                        'id',
+                        'uid',
+                        'title',
+                        'status',
+                        'horizon',
+                        'target_date',
+                        'area_id',
+                    ],
                 },
                 {
                     model: Tag,
-                    attributes: ['id', 'name', 'uid'],
+                    attributes: ['id', 'name', 'uid', 'color'],
                     through: { attributes: [] },
                 },
                 {
@@ -115,7 +130,7 @@ class ProjectsRepository extends BaseRepository {
                     include: [
                         {
                             model: Tag,
-                            attributes: ['id', 'name', 'uid'],
+                            attributes: ['id', 'name', 'uid', 'color'],
                             through: { attributes: [] },
                             required: false,
                         },
@@ -125,7 +140,7 @@ class ProjectsRepository extends BaseRepository {
                             include: [
                                 {
                                     model: Tag,
-                                    attributes: ['id', 'name', 'uid'],
+                                    attributes: ['id', 'name', 'uid', 'color'],
                                     through: { attributes: [] },
                                     required: false,
                                 },
@@ -148,7 +163,7 @@ class ProjectsRepository extends BaseRepository {
                     include: [
                         {
                             model: Tag,
-                            attributes: ['id', 'name', 'uid'],
+                            attributes: ['id', 'name', 'uid', 'color'],
                             through: { attributes: [] },
                         },
                     ],
@@ -159,8 +174,22 @@ class ProjectsRepository extends BaseRepository {
                     attributes: ['id', 'uid', 'name'],
                 },
                 {
+                    model: Goal,
+                    as: 'Goal',
+                    required: false,
+                    attributes: [
+                        'id',
+                        'uid',
+                        'title',
+                        'status',
+                        'horizon',
+                        'target_date',
+                        'area_id',
+                    ],
+                },
+                {
                     model: Tag,
-                    attributes: ['id', 'name', 'uid'],
+                    attributes: ['id', 'name', 'uid', 'color'],
                     through: { attributes: [] },
                 },
             ],
@@ -176,13 +205,27 @@ class ProjectsRepository extends BaseRepository {
             include: [
                 {
                     model: Tag,
-                    attributes: ['id', 'name', 'uid'],
+                    attributes: ['id', 'name', 'uid', 'color'],
                     through: { attributes: [] },
                 },
                 {
                     model: Area,
                     required: false,
                     attributes: ['id', 'uid', 'name'],
+                },
+                {
+                    model: Goal,
+                    as: 'Goal',
+                    required: false,
+                    attributes: [
+                        'id',
+                        'uid',
+                        'title',
+                        'status',
+                        'horizon',
+                        'target_date',
+                        'area_id',
+                    ],
                 },
             ],
         });
