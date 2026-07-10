@@ -142,7 +142,9 @@ const EisenhowerMatrix: React.FC = () => {
             ? [...otherTags, { name: URGENT_TAG }]
             : otherTags;
 
-        const updatedTask: Task = { ...task, priority: newPriority, tags: newTags };
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { subtasks: _subtasks, ...taskWithoutSubtasks } = task;
+        const updatedTask: Task = { ...taskWithoutSubtasks, name: task.original_name || task.name, priority: newPriority, tags: newTags };
 
         // Optimistic update so the task moves instantly
         setTasks((prev) => prev.map((t) => (t.id === task.id ? updatedTask : t)));
@@ -192,7 +194,7 @@ const EisenhowerMatrix: React.FC = () => {
         const task = tasks.find((t) => t.id === draggingTaskId);
         if (!task) return;
 
-        // Find the source quadrant — skip if dropping onto same quadrant
+        // Find the source quadrant - skip if dropping onto same quadrant
         const sourceKey = quadrants.find((q) => q.tasks.some((t) => t.id === draggingTaskId))?.key;
         if (sourceKey === targetKey) return;
 

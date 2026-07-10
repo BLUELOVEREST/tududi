@@ -108,7 +108,13 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
 
     useEffect(() => {
         if (formData.area_id) {
-            fetchGoals(formData.area_id).then(setAvailableGoals).catch(() => setAvailableGoals([]));
+            const area = areas.find((a) => a.id === formData.area_id);
+            const areaUid = area?.uid || formData.area_uid;
+            if (areaUid) {
+                fetchGoals(areaUid)
+                    .then(setAvailableGoals)
+                    .catch(() => setAvailableGoals([]));
+            }
         } else {
             setAvailableGoals([]);
         }
@@ -693,7 +699,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
                                                             onChange={
                                                                 handleDueDateChange
                                                             }
-                                                            placeholder="Select due date"
+                                                            placeholder={t('projects.selectDueDatePlaceholder')}
                                                         />
                                                     </div>
                                                 </div>
@@ -800,7 +806,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
                                                     ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-400'
                                                     : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
                                             }`}
-                                            title="Goal"
+                                            title={t('projects.goalTitle')}
                                         >
                                             <FlagIcon className="h-5 w-5" />
                                             {(formData.goal_id != null || formData.is_maintenance) && (

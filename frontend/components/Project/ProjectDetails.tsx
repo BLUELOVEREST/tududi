@@ -12,9 +12,12 @@ import {
     XCircleIcon,
     ChartBarIcon,
     CheckIcon,
-    ArrowLeftIcon,
+    SparklesIcon,
 } from '@heroicons/react/24/outline';
 import { useToast } from '../Shared/ToastContext';
+import ProjectAIInsights, {
+    ProjectAIInsightsHandle,
+} from '../AI/ProjectAIInsights';
 import ProjectModal from './ProjectModal';
 import ConfirmDialog from '../Shared/ConfirmDialog';
 import NoteModal from '../Note/NoteModal';
@@ -80,6 +83,8 @@ const ProjectDetails: React.FC = () => {
     const [orderBy, setOrderBy] = useState<string>('status:inProgressFirst');
     const [taskSearchQuery, setTaskSearchQuery] = useState('');
     const [isSearchExpanded, setIsSearchExpanded] = useState(false);
+    const [aiInsightsActive, setAiInsightsActive] = useState(false);
+    const aiInsightsRef = useRef<ProjectAIInsightsHandle>(null);
     const {
         isOpen: isModalOpen,
         openModal,
@@ -285,7 +290,7 @@ const ProjectDetails: React.FC = () => {
         const newTask = await createTask({
             name: taskName,
             status: 0,
-            project_id: project.id,
+            project_uid: project.uid,
             completed_at: null,
         });
         setTasks([...tasks, newTask]);
@@ -433,13 +438,13 @@ const ProjectDetails: React.FC = () => {
     };
 
     const handleCreateNextAction = async (
-        projectId: number,
+        projectUid: string,
         actionDescription: string
     ) => {
         const newTask = await createTask({
             name: actionDescription,
             status: 0,
-            project_id: projectId,
+            project_uid: projectUid,
             priority: 0,
             completed_at: null,
         });
@@ -853,13 +858,6 @@ const ProjectDetails: React.FC = () => {
             />
 
             <div className="w-full px-4 sm:px-6 lg:px-10">
-                <button
-                    onClick={() => navigate(-1)}
-                    className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white mb-4"
-                >
-                    <ArrowLeftIcon className="h-5 w-5" />
-                    {t('common.back', 'Back')}
-                </button>
                 <div className="w-full">
                     <div className="mb-4">
                         <div className="flex items-center justify-between min-h-[2.5rem]">
@@ -939,6 +937,33 @@ const ProjectDetails: React.FC = () => {
                                     </button>
                                     <button
                                         onClick={() =>
+                                            aiInsightsRef.current?.activate()
+                                        }
+                                        className={`flex items-center transition-all duration-300 focus:outline-none focus:ring-0 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-inset rounded-lg p-1.5 sm:p-2 ${
+                                            aiInsightsActive
+                                                ? 'bg-indigo-100 dark:bg-indigo-900/40'
+                                                : 'bg-gray-100 dark:bg-gray-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/30'
+                                        }`}
+                                        aria-pressed={aiInsightsActive}
+                                        aria-label={t(
+                                            'aiAssistant.projectInsightsTitle',
+                                            'AI Insights'
+                                        )}
+                                        title={t(
+                                            'aiAssistant.projectInsightsTitle',
+                                            'AI Insights'
+                                        )}
+                                    >
+                                        <SparklesIcon
+                                            className={`h-4 w-4 sm:h-5 sm:w-5 ${
+                                                aiInsightsActive
+                                                    ? 'text-indigo-600 dark:text-indigo-300'
+                                                    : 'text-gray-600 dark:text-gray-200'
+                                            }`}
+                                        />
+                                    </button>
+                                    <button
+                                        onClick={() =>
                                             setIsSearchExpanded((v) => !v)
                                         }
                                         className={`flex items-center transition-all duration-300 focus:outline-none focus:ring-0 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-inset rounded-lg p-1.5 sm:p-2 ${
@@ -980,6 +1005,15 @@ const ProjectDetails: React.FC = () => {
 
                     {activeTab === 'tasks' && (
                         <>
+                            <div className="mb-6">
+                                <ProjectAIInsights
+                                    ref={aiInsightsRef}
+                                    project={project}
+                                    taskStats={taskStats}
+                                    onActiveChange={setAiInsightsActive}
+                                />
+                            </div>
+
                             <div
                                 className={`transition-all duration-300 ease-in-out ${
                                     isSearchExpanded
@@ -1094,9 +1128,8 @@ const ProjectDetails: React.FC = () => {
                                     title: '',
                                     content: '',
                                     tags: [],
-                                    project_id: project.id,
                                     project: {
-                                        id: project.id,
+                                        id: project.id!,
                                         name: project.name,
                                         uid: project.uid,
                                     },
@@ -1140,7 +1173,7 @@ const ProjectDetails: React.FC = () => {
 
                     {isConfirmDialogOpen && noteToDelete && (
                         <ConfirmDialog
-                            title="Delete Note"
+                            title={t('modals.deleteNote.title')}
                             message={`Are you sure you want to delete the note "${noteToDelete.title}"?`}
                             onConfirm={() => {
                                 const identifier =

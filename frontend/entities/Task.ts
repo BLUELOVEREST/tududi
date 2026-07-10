@@ -23,8 +23,10 @@ export interface Task {
     notion_sync_error?: string | null;
     tags?: Tag[];
     project_id?: number;
+    project_uid?: string;
     Project?: Project;
     area_id?: number;
+    area_uid?: string;
     Area?: Area;
     created_at?: string;
     updated_at?: string;
@@ -52,7 +54,9 @@ export interface Task {
     habit_best_streak?: number;
     habit_total_completions?: number;
     habit_last_completion_at?: string;
-    // Transient UI field set by suggestion scoring — never persisted or sent to server
+    assigned_to?: string | null;
+    involves?: string[];
+    // Transient UI field set by suggestion scoring - never persisted or sent to server
     _suggestionMeta?: {
         score: number;
         reason: 'area_balance' | 'due' | 'goal' | 'fits_now' | 'revive' | 'high' | 'aging_review' | 'next_step';

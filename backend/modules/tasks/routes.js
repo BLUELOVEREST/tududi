@@ -383,7 +383,9 @@ router.get('/tasks', async (req, res) => {
         );
 
         const serializationOptions =
-            type === 'today' ? { preserveOriginalName: true } : {};
+            type === 'today' || type === 'calendar'
+                ? { preserveOriginalName: true }
+                : {};
 
         const response = {
             tasks: await serializeTasks(
@@ -466,7 +468,9 @@ router.post('/task', async (req, res) => {
         const {
             name,
             project_id,
+            project_uid,
             area_id,
+            area_uid,
             parent_task_id,
             tags,
             Tags,
@@ -508,7 +512,7 @@ router.post('/task', async (req, res) => {
 
         try {
             const validProjectId = await validateProjectAccess(
-                project_id,
+                project_uid || project_id,
                 req.currentUser.id
             );
             if (validProjectId) taskAttributes.project_id = validProjectId;
@@ -520,7 +524,7 @@ router.post('/task', async (req, res) => {
 
         try {
             const validAreaId = await validateAreaAccess(
-                area_id,
+                area_uid || area_id,
                 req.currentUser.id
             );
             if (validAreaId) taskAttributes.area_id = validAreaId;
@@ -625,7 +629,9 @@ router.patch('/task/:uid', requireTaskWriteAccess, async (req, res) => {
         const {
             status,
             project_id,
+            project_uid,
             area_id,
+            area_uid,
             parent_task_id,
             tags,
             Tags,
@@ -728,10 +734,12 @@ router.patch('/task/:uid', requireTaskWriteAccess, async (req, res) => {
 
         await handleCompletionStatus(taskAttributes, status, task);
 
-        if (project_id !== undefined) {
+        const projectIdentifier =
+            project_uid !== undefined ? project_uid : project_id;
+        if (projectIdentifier !== undefined) {
             try {
                 const validProjectId = await validateProjectAccess(
-                    project_id,
+                    projectIdentifier,
                     req.currentUser.id
                 );
                 taskAttributes.project_id = validProjectId;
@@ -742,10 +750,11 @@ router.patch('/task/:uid', requireTaskWriteAccess, async (req, res) => {
             }
         }
 
-        if (area_id !== undefined) {
+        const areaIdentifier = area_uid !== undefined ? area_uid : area_id;
+        if (areaIdentifier !== undefined) {
             try {
                 const validAreaId = await validateAreaAccess(
-                    area_id,
+                    areaIdentifier,
                     req.currentUser.id
                 );
                 taskAttributes.area_id = validAreaId;

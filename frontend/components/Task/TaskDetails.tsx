@@ -32,7 +32,9 @@ import {
     TaskDueDateCard,
     TaskDeferUntilCard,
     TaskAttachmentsCard,
+    TaskAssignedToCard,
 } from './TaskDetails/';
+import TaskAIInsights, { TaskAIInsightsHandle } from '../AI/TaskAIInsights';
 import {
     isTaskOverdueInTodayPlan,
     isTaskPastDue,
@@ -95,6 +97,15 @@ const TaskDetails: React.FC = () => {
     const [pendingSubtasks, setPendingSubtasks] = useState<Task[]>([]);
     const [actionsMenuOpen, setActionsMenuOpen] = useState(false);
     const actionsMenuRef = useRef<HTMLDivElement>(null);
+    const aiAssistantEnabled = useStore(
+        (state: any) => state.userSettingsStore.aiAssistantEnabled
+    );
+    const aiInsightsRef = useRef<TaskAIInsightsHandle>(null);
+    const [aiInsightsActive, setAiInsightsActive] = useState(false);
+
+    const handleAiInsightsClick = useCallback(() => {
+        aiInsightsRef.current?.activate();
+    }, []);
     const lastKnownSubtaskCount = useRef<number>(0);
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
@@ -186,7 +197,7 @@ const TaskDetails: React.FC = () => {
     }, [tagsStore]);
 
     useEffect(() => {
-        if (!areasStore.isLoading && areasStore.areas.length === 0) {
+        if (!areasStore.hasLoaded && !areasStore.isLoading) {
             areasStore.loadAreas();
         }
     }, [areasStore]);
@@ -535,7 +546,7 @@ const TaskDetails: React.FC = () => {
 
     useEffect(() => {
         const loadSubtasks = async () => {
-            if (activePill !== 'subtasks' || !task?.uid) {
+            if (!task?.uid) {
                 return;
             }
 
@@ -571,7 +582,7 @@ const TaskDetails: React.FC = () => {
         };
 
         loadSubtasks();
-    }, [activePill, task?.uid, task?.subtasks, hasLoadedSubtasks, tasksStore]);
+    }, [task?.uid, task?.subtasks, hasLoadedSubtasks, tasksStore]);
 
     useEffect(() => {
         setPendingSubtasks(subtasks);
@@ -1094,6 +1105,21 @@ const TaskDetails: React.FC = () => {
         }
     };
 
+    const handleAssignPerson = async (personUid: string | null) => {
+        if (!task?.uid) return;
+        try {
+            taskModifiedRef.current = true;
+            await updateTask(task.uid, { assigned_to: personUid });
+            if (uid) {
+                const updatedTask = await fetchTaskByUid(uid);
+                tasksStore.updateTaskInStore(updatedTask);
+            }
+        } catch (error) {
+            console.error('Error assigning person:', error);
+            showErrorToast('Failed to update assignment');
+        }
+    };
+
     const getAreaLink = (area: Area) => {
         if (area.uid) {
             const slug = area.name
@@ -1232,10 +1258,24 @@ const TaskDetails: React.FC = () => {
                     isOverdueAlertVisible={isOverdue && isOverdueBubbleVisible}
                     onDismissOverdueAlert={handleDismissOverdueAlert}
                     onQuickStatusToggle={handleCompletionToggle}
+                    onAiInsightsClick={aiAssistantEnabled ? handleAiInsightsClick : undefined}
+                    aiInsightsActive={aiInsightsActive}
                     attachmentCount={attachmentCount}
-                    subtasksCount={subtasks.length}
                     autoEditTitle={isNewTask}
                 />
+
+                {aiAssistantEnabled && (
+                    <div className="mb-4 mt-6">
+                        <TaskAIInsights
+                            ref={aiInsightsRef}
+                            task={task}
+                            project={projectsStore.projects.find(
+                                (p: any) => p.id === task.project_id
+                            ) || null}
+                            onActiveChange={setAiInsightsActive}
+                        />
+                    </div>
+                )}
 
                 <div className="mb-6 mt-6">
                     {activePill === 'overview' && (
@@ -1244,6 +1284,26 @@ const TaskDetails: React.FC = () => {
                                 <TaskContentCard
                                     content={task.note || ''}
                                     onUpdate={handleContentUpdate}
+                                />
+                                <TaskSubtasksCard
+                                    task={task}
+                                    subtasks={pendingSubtasks}
+                                    onSubtasksChange={setPendingSubtasks}
+                                    onSave={handleSaveSubtasks}
+                                />
+                                <TaskRecurrenceCard
+                                    task={task}
+                                    parentTask={parentTask}
+                                    loadingParent={loadingParent}
+                                    isEditing={isEditingRecurrence}
+                                    recurrenceForm={recurrenceForm}
+                                    onStartEdit={handleStartRecurrenceEdit}
+                                    onChange={handleRecurrenceChange}
+                                    onSave={handleSaveRecurrence}
+                                    onCancel={handleCancelRecurrenceEdit}
+                                    loadingIterations={loadingIterations}
+                                    nextIterations={nextIterations}
+                                    canEdit={!task.recurring_parent_id}
                                 />
                             </div>
 
@@ -1265,6 +1325,11 @@ const TaskDetails: React.FC = () => {
                                     onAreaSelect={handleAreaSelection}
                                     onAreaClear={handleClearArea}
                                     getAreaLink={getAreaLink}
+                                />
+
+                                <TaskAssignedToCard
+                                    task={task}
+                                    onAssign={handleAssignPerson}
                                 />
 
                                 <TaskTagsCard
@@ -1300,36 +1365,6 @@ const TaskDetails: React.FC = () => {
                         </div>
                     )}
 
-                    {activePill === 'recurrence' && (
-                        <div className="grid grid-cols-1">
-                            <TaskRecurrenceCard
-                                task={task}
-                                parentTask={parentTask}
-                                loadingParent={loadingParent}
-                                isEditing={isEditingRecurrence}
-                                recurrenceForm={recurrenceForm}
-                                onStartEdit={handleStartRecurrenceEdit}
-                                onChange={handleRecurrenceChange}
-                                onSave={handleSaveRecurrence}
-                                onCancel={handleCancelRecurrenceEdit}
-                                loadingIterations={loadingIterations}
-                                nextIterations={nextIterations}
-                                canEdit={!task.recurring_parent_id}
-                            />
-                        </div>
-                    )}
-
-                    {activePill === 'subtasks' && (
-                        <div className="grid grid-cols-1">
-                            <TaskSubtasksCard
-                                task={task}
-                                subtasks={pendingSubtasks}
-                                onSubtasksChange={setPendingSubtasks}
-                                onSave={handleSaveSubtasks}
-                            />
-                        </div>
-                    )}
-
                     {activePill === 'attachments' && (
                         <div className="grid grid-cols-1">
                             <TaskAttachmentsCard
@@ -1347,6 +1382,7 @@ const TaskDetails: React.FC = () => {
                             />
                         </div>
                     )}
+
                 </div>
 
                 {isConfirmDialogOpen && taskToDelete && (

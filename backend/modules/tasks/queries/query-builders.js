@@ -303,6 +303,8 @@ async function filterTasksByParams(
                         'cancelled',
                     ],
                 };
+            } else if (params.status === 'all') {
+                // No status filter - return tasks of all statuses
             } else if (!params.client_side_filtering) {
                 whereClause.status = { [Op.notIn]: [Task.STATUS.DONE, 'done'] };
             }
@@ -332,7 +334,7 @@ async function filterTasksByParams(
                     ],
                 };
             } else if (params.status === 'all') {
-                // No status filter — return tasks of all statuses
+                // No status filter - return tasks of all statuses
             } else if (!params.client_side_filtering) {
                 whereClause.status = { [Op.notIn]: [Task.STATUS.DONE, 'done'] };
             }
@@ -416,8 +418,28 @@ async function filterTasksByParams(
         };
     }
 
-    if (params.area_id) {
+    if (params.project_uid) {
+        const project = await Project.findOne({
+            where: { uid: params.project_uid },
+        });
+        if (project) {
+            whereClause.project_id = project.id;
+        }
+    } else if (params.project_id) {
+        whereClause.project_id = params.project_id;
+    }
+
+    if (params.area_uid) {
+        const area = await Area.findOne({ where: { uid: params.area_uid } });
+        if (area) {
+            whereClause.area_id = area.id;
+        }
+    } else if (params.area_id) {
         whereClause.area_id = params.area_id;
+    }
+
+    if (params.assigned_to) {
+        whereClause.assigned_to = params.assigned_to;
     }
 
     const finalWhereClause = {

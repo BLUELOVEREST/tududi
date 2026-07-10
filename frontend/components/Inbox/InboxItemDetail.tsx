@@ -157,6 +157,7 @@ const InboxItemDetail: React.FC<InboxItemDetailProps> = ({
 
                         if (projectName && !matches.includes(projectName)) {
                             matches.push(projectName);
+                            return matches;
                         }
                     }
                 }
@@ -345,7 +346,7 @@ const InboxItemDetail: React.FC<InboxItemDetailProps> = ({
             return existingTag || { name: hashtagName };
         });
 
-        let projectId = undefined;
+        let projectUid: string | undefined = undefined;
         if (sourceProjectRefs.length > 0) {
             const projectName = sourceProjectRefs[0];
             const matchingProject = projects.find(
@@ -353,7 +354,7 @@ const InboxItemDetail: React.FC<InboxItemDetailProps> = ({
                     project.name.toLowerCase() === projectName.toLowerCase()
             );
             if (matchingProject) {
-                projectId = matchingProject.id;
+                projectUid = matchingProject.uid;
             }
         }
 
@@ -361,7 +362,7 @@ const InboxItemDetail: React.FC<InboxItemDetailProps> = ({
             sourceText,
             cleanedContent: cleaned,
             tagObjects,
-            projectId,
+            projectUid,
             projectRefsList: sourceProjectRefs,
             hashtagsList: sourceHashtags,
         };
@@ -384,7 +385,7 @@ const InboxItemDetail: React.FC<InboxItemDetailProps> = ({
                 priority: item.priority ?? null,
                 note: briefContent,
                 tags: payload.tagObjects,
-                project_id: payload.projectId,
+                project_uid: payload.projectUid,
                 completed_at: null,
             };
 
@@ -500,7 +501,7 @@ const InboxItemDetail: React.FC<InboxItemDetailProps> = ({
             title: finalTitle,
             content: finalContent,
             tags: tagObjects,
-            project_uid: payload.projectId,
+            project_uid: payload.projectUid,
         };
 
         if (item.uid !== undefined) {

@@ -29,6 +29,8 @@ import Habits from './components/Habits/Habits';
 import HabitDetails from './components/Habits/HabitDetails';
 import EisenhowerMatrix from './components/Eisenhower/EisenhowerMatrix';
 import KanbanBoard from './components/Kanban/KanbanBoard';
+import PeopleList from './components/People/PeopleList';
+import PersonDetails from './components/People/PersonDetails';
 import { setCurrentUser as setUserInStorage } from './utils/userUtils';
 import { getApiPath, getLocalesPath } from './config/paths';
 import { useStore } from './store/useStore';
@@ -76,6 +78,9 @@ const App: React.FC = () => {
                 );
                 useStore.getState().userSettingsStore.setCalendarEnabled(
                     data.user.features?.calendar_enabled === true
+                );
+                useStore.getState().userSettingsStore.setAiAssistantEnabled(
+                    data.user.features?.ai_assistant_enabled === true
                 );
             } else {
                 setCurrentUser(null);
@@ -287,6 +292,8 @@ const App: React.FC = () => {
                                 element={<About isDarkMode={isDarkMode} />}
                             />
                             <Route path="/backup" element={<BackupRestore />} />
+                            <Route path="/people" element={<PeopleList />} />
+                            <Route path="/person/:uid" element={<PersonDetails />} />
                             <Route
                                 path="/admin/users"
                                 element={

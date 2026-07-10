@@ -10,9 +10,11 @@ import {
     FireIcon,
     ArrowUpIcon,
     ArrowDownIcon,
+    SparklesIcon,
 } from '@heroicons/react/24/outline';
 import { Link } from 'react-router-dom';
 import { Task, PriorityType } from '../../../entities/Task';
+import BackButton from '../../Shared/BackButton';
 import { formatDateTime } from '../../../utils/dateUtils';
 import TaskStatusControl from '../TaskStatusControl';
 import { getStatusValue } from '../../../constants/taskStatus';
@@ -34,8 +36,9 @@ interface TaskDetailsHeaderProps {
     isOverdueAlertVisible?: boolean;
     onDismissOverdueAlert?: () => void;
     onQuickStatusToggle?: () => void;
+    onAiInsightsClick?: () => void;
+    aiInsightsActive?: boolean;
     attachmentCount?: number;
-    subtasksCount?: number;
     autoEditTitle?: boolean;
 }
 
@@ -55,8 +58,9 @@ const TaskDetailsHeader: React.FC<TaskDetailsHeaderProps> = ({
     isOverdueAlertVisible = false,
     onDismissOverdueAlert,
     onQuickStatusToggle,
+    onAiInsightsClick,
+    aiInsightsActive = false,
     attachmentCount = 0,
-    subtasksCount = 0,
     autoEditTitle = false,
 }) => {
     const { t } = useTranslation();
@@ -585,6 +589,7 @@ const TaskDetailsHeader: React.FC<TaskDetailsHeaderProps> = ({
                             </>
                         )}
                     </div>
+                    <BackButton className="flex-shrink-0 self-start" />
                 </div>
 
                 {/* Divider - Edge to edge */}
@@ -602,33 +607,6 @@ const TaskDetailsHeader: React.FC<TaskDetailsHeaderProps> = ({
                             }`}
                         >
                             {t('task.overview', 'Overview')}
-                        </button>
-                        <button
-                            onClick={() => onPillChange('subtasks')}
-                            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors relative ${
-                                activePill === 'subtasks'
-                                    ? 'bg-blue-500 dark:bg-blue-600 text-white'
-                                    : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-                            }`}
-                        >
-                            {t('task.subtasks', 'Subtasks')}
-                            {subtasksCount > 0 && (
-                                <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-blue-500 dark:bg-blue-400 rounded-full border border-white dark:border-gray-900"></span>
-                            )}
-                        </button>
-                        <button
-                            onClick={() => onPillChange('recurrence')}
-                            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors relative ${
-                                activePill === 'recurrence'
-                                    ? 'bg-blue-500 dark:bg-blue-600 text-white'
-                                    : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-                            }`}
-                        >
-                            {t('task.recurrence', 'Recurrence')}
-                            {task.recurrence_type &&
-                                task.recurrence_type !== 'none' && (
-                                    <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-blue-500 dark:bg-blue-400 rounded-full border border-white dark:border-gray-900"></span>
-                                )}
                         </button>
                         <button
                             onClick={() => onPillChange('attachments')}
@@ -654,7 +632,29 @@ const TaskDetailsHeader: React.FC<TaskDetailsHeaderProps> = ({
                             {t('task.activity', 'Activity')}
                         </button>
                     </div>
-                    {(showOverdueIcon || onQuickStatusToggle) && (
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                        {onAiInsightsClick && (
+                            <button
+                                onClick={onAiInsightsClick}
+                                className={`flex items-center transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded-lg p-1.5 ${
+                                    aiInsightsActive
+                                        ? 'bg-indigo-100 dark:bg-indigo-900/40'
+                                        : 'bg-gray-100 dark:bg-gray-800 hover:bg-indigo-50 dark:hover:bg-indigo-900/30'
+                                }`}
+                                aria-pressed={aiInsightsActive}
+                                aria-label={t('aiAssistant.taskInsightsTitle', 'AI Insights')}
+                                title={t('aiAssistant.taskInsightsTitle', 'AI Insights')}
+                            >
+                                <SparklesIcon
+                                    className={`h-4 w-4 ${
+                                        aiInsightsActive
+                                            ? 'text-indigo-600 dark:text-indigo-300'
+                                            : 'text-gray-600 dark:text-gray-200'
+                                    }`}
+                                />
+                            </button>
+                        )}
+                        {(showOverdueIcon || onQuickStatusToggle) && (
                         <div className="flex items-center gap-2 flex-shrink-0">
                             {showOverdueIcon && (
                                 <div
@@ -778,6 +778,7 @@ const TaskDetailsHeader: React.FC<TaskDetailsHeaderProps> = ({
                 </div>
             </div>
         </div>
+    </div>
     );
 };
 

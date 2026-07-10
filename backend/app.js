@@ -143,7 +143,7 @@ app.use((req, res, next) => {
     })(req, res, next);
 });
 
-// RFC 9728 — Protected Resource Metadata (no auth required)
+// RFC 9728 - Protected Resource Metadata (no auth required)
 const oauthRoutes = require('./modules/oauth/routes');
 app.use(oauthRoutes);
 
@@ -256,6 +256,8 @@ const usersModule = require('./modules/users');
 const viewsModule = require('./modules/views');
 const mcpModule = require('./modules/mcp');
 const oidcModule = require('./modules/oidc');
+const aiAssistantModule = require('./modules/ai-assistant');
+const peopleModule = require('./modules/people');
 
 // Swagger documentation - enabled by default, protected by authentication
 // Mounted on /api-docs to avoid conflicts with API routes
@@ -341,6 +343,8 @@ const registerApiRoutes = (basePath) => {
     app.use(basePath, notificationsModule.routes);
     app.use(basePath, notionSyncModule.routes);
     app.use(basePath, mcpModule.routes);
+    app.use(basePath, aiAssistantModule.routes);
+    app.use(basePath, peopleModule.routes);
 };
 
 // Register routes at both /api and /api/v1 (if versioned) to maintain backwards compatibility

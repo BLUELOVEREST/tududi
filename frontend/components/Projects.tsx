@@ -38,7 +38,6 @@ const Projects: React.FC = () => {
     const {
         projects,
         setProjects,
-        setLoading: setProjectsLoading,
         setError: setProjectsError,
     } = useStore((state) => state.projectsStore);
     const { isLoading, isError } = useStore((state) => state.projectsStore);
@@ -76,6 +75,40 @@ const Projects: React.FC = () => {
     const [searchParams, setSearchParams] = useSearchParams();
     const statusFilter = searchParams.get('status') || 'not_completed';
     const somedayFilter = searchParams.get('someday') === '1';
+
+    // Restore persisted filters from localStorage on first mount (URL params take precedence)
+    useEffect(() => {
+        const params = new URLSearchParams(searchParams);
+        let changed = false;
+
+        if (!params.has('status')) {
+            const saved = localStorage.getItem('projectsStatusFilter');
+            if (saved && saved !== 'not_completed') {
+                params.set('status', saved);
+                changed = true;
+            }
+        }
+
+        if (!params.has('area')) {
+            const saved = localStorage.getItem('projectsAreaFilter');
+            if (saved) {
+                params.set('area', saved);
+                changed = true;
+            }
+        }
+
+        if (!params.has('someday')) {
+            const saved = localStorage.getItem('projectsSomedayFilter');
+            if (saved === '1') {
+                params.set('someday', '1');
+                changed = true;
+            }
+        }
+
+        if (changed) {
+            setSearchParams(params, { replace: true });
+        }
+    }, []);
 
     // Get area UID from URL parameters
     const getAreaUidFromParams = () => {
@@ -196,7 +229,6 @@ const Projects: React.FC = () => {
     };
 
     const handleSaveProject = async (project: Project) => {
-        setProjectsLoading(true);
         try {
             if (project.uid) {
                 await updateProject(project.uid, project);
@@ -210,7 +242,6 @@ const Projects: React.FC = () => {
             console.error('Error saving project:', error);
             setProjectsError(true);
         } finally {
-            setProjectsLoading(false);
             setModalState({ isOpen: false, projectToEdit: null });
         }
     };
@@ -231,7 +262,6 @@ const Projects: React.FC = () => {
 
         try {
             if (projectToDelete.uid !== undefined) {
-                setProjectsLoading(true);
                 await deleteProject(projectToDelete.uid);
 
                 // Fetch all projects without filters to keep global store complete
@@ -250,7 +280,6 @@ const Projects: React.FC = () => {
                     : t('projects.deleteError', 'Failed to delete project');
             showErrorToast(msg);
         } finally {
-            setProjectsLoading(false);
             setIsConfirmDialogOpen(false);
             setProjectToDelete(null);
         }
@@ -269,6 +298,7 @@ const Projects: React.FC = () => {
         } else {
             params.set('status', value);
         }
+        localStorage.setItem('projectsStatusFilter', value);
         setSearchParams(params);
     };
 
@@ -276,8 +306,10 @@ const Projects: React.FC = () => {
         const params = new URLSearchParams(searchParams);
         if (somedayFilter) {
             params.delete('someday');
+            localStorage.setItem('projectsSomedayFilter', '0');
         } else {
             params.set('someday', '1');
+            localStorage.setItem('projectsSomedayFilter', '1');
         }
         setSearchParams(params);
     };
@@ -290,7 +322,7 @@ const Projects: React.FC = () => {
         if (value !== '') {
             params.set('area', value);
         }
-
+        localStorage.setItem('projectsAreaFilter', value);
         setSearchParams(params);
     };
 

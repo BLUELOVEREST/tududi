@@ -106,42 +106,42 @@ const AreaDetails: React.FC = () => {
     }, [areaUid, areasStore.areas, areasStore.isLoading]);
 
     const loadAreaTasks = useCallback(async () => {
-        if (!area?.id) return;
+        if (!area?.uid) return;
         setLoadingTasks(true);
         try {
-            const result = await fetchTasks(`?area_id=${area.id}&type=all&status=all`);
+            const result = await fetchTasks(`?area_uid=${area.uid}&type=all&status=all`);
             setAreaTasks(result.tasks || []);
         } catch {
             setAreaTasks([]);
         } finally {
             setLoadingTasks(false);
         }
-    }, [area?.id]);
+    }, [area?.uid]);
 
     useEffect(() => {
-        if (area?.id) {
+        if (area?.uid) {
             loadAreaTasks();
         }
-    }, [area?.id, loadAreaTasks]);
+    }, [area?.uid, loadAreaTasks]);
 
     const loadGoals = useCallback(async () => {
-        if (!area?.id) return;
+        if (!area?.uid) return;
         setLoadingGoals(true);
         try {
-            const data = await fetchGoals(area.id);
+            const data = await fetchGoals(area.uid);
             setGoals(data);
         } catch {
             setGoals([]);
         } finally {
             setLoadingGoals(false);
         }
-    }, [area?.id]);
+    }, [area?.uid]);
 
     useEffect(() => {
-        if (area?.id) {
+        if (area?.uid) {
             loadGoals();
         }
-    }, [area?.id, loadGoals]);
+    }, [area?.uid, loadGoals]);
 
     const areaProjects = projectsStore.projects.filter((p: Project) => {
         const projectArea = p.area || (p as any).Area;
@@ -423,14 +423,14 @@ const AreaDetails: React.FC = () => {
                             <input
                                 autoFocus
                                 type="text"
-                                placeholder="Goal title"
+                                placeholder={t('areas.goalTitlePlaceholder')}
                                 value={goalForm.title}
                                 onChange={(e) => setGoalForm((f) => f ? { ...f, title: e.target.value } : f)}
                                 className="w-full text-sm border border-gray-300 dark:border-gray-600 rounded-md py-1.5 px-3 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
                             />
                             <input
                                 type="text"
-                                placeholder="Why this matters (optional)"
+                                placeholder={t('areas.goalWhyPlaceholder')}
                                 value={goalForm.why}
                                 onChange={(e) => setGoalForm((f) => f ? { ...f, why: e.target.value } : f)}
                                 className="w-full text-sm border border-gray-300 dark:border-gray-600 rounded-md py-1.5 px-3 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500"
@@ -441,8 +441,8 @@ const AreaDetails: React.FC = () => {
                                     onChange={(e) => setGoalForm((f) => f ? { ...f, horizon: e.target.value as GoalHorizon } : f)}
                                     className="flex-1 text-sm border border-gray-300 dark:border-gray-600 rounded-md py-1.5 px-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                                 >
-                                    <option value="season">Season</option>
-                                    <option value="year">Year</option>
+                                    <option value="season">{t('areas.horizonSeason')}</option>
+                                    <option value="year">{t('areas.horizonYear')}</option>
                                 </select>
                                 <select
                                     value={goalForm.status}
@@ -658,6 +658,7 @@ interface GoalBucketProps {
 const GoalBucket: React.FC<GoalBucketProps> = ({
     goal, projects, areaColor, getProjectLink, onEdit, onDelete, dimmed,
 }) => {
+    const { t } = useTranslation();
     const dotColor = areaColor || '#6b7280';
     return (
         <div className={dimmed ? 'opacity-60' : ''}>
@@ -673,10 +674,10 @@ const GoalBucket: React.FC<GoalBucketProps> = ({
                     </span>
                 </div>
                 <div className="flex items-center gap-1 flex-shrink-0">
-                    <button onClick={onEdit} className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" title="Edit goal">
+                    <button onClick={onEdit} className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" title={t('areas.editGoal')}>
                         <PencilSquareIcon className="h-3.5 w-3.5" />
                     </button>
-                    <button onClick={onDelete} className="p-1 text-gray-400 hover:text-red-500" title="Delete goal">
+                    <button onClick={onDelete} className="p-1 text-gray-400 hover:text-red-500" title={t('areas.deleteGoal')}>
                         <TrashIcon className="h-3.5 w-3.5" />
                     </button>
                 </div>
@@ -709,6 +710,7 @@ interface MaintenanceProjectRowProps {
 }
 
 const MaintenanceProjectRow: React.FC<MaintenanceProjectRowProps> = ({ project, getLink, onUnmark }) => {
+    const { t } = useTranslation();
     const cardColor = (project as any).color || '#6b7280';
     return (
         <div
@@ -724,7 +726,7 @@ const MaintenanceProjectRow: React.FC<MaintenanceProjectRowProps> = ({ project, 
             <button
                 onClick={() => onUnmark(project)}
                 className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
-                title="Move back to unlinked"
+                title={t('areas.moveBackToUnlinked')}
             >
                 unlink
             </button>

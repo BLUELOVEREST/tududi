@@ -239,6 +239,35 @@ module.exports = (sequelize) => {
                 type: DataTypes.DATE,
                 allowNull: true,
             },
+            ai_insights: {
+                type: DataTypes.JSON,
+                allowNull: true,
+                defaultValue: null,
+            },
+            assigned_to: {
+                type: DataTypes.STRING,
+                allowNull: true,
+                defaultValue: null,
+                references: {
+                    model: 'people',
+                    key: 'uid',
+                },
+            },
+            involves: {
+                type: DataTypes.TEXT,
+                allowNull: true,
+                defaultValue: null,
+                get() {
+                    const raw = this.getDataValue('involves');
+                    return raw ? JSON.parse(raw) : [];
+                },
+                set(value) {
+                    this.setDataValue(
+                        'involves',
+                        value && value.length > 0 ? JSON.stringify(value) : null
+                    );
+                },
+            },
         },
         {
             tableName: 'tasks',
