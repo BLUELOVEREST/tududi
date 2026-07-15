@@ -139,7 +139,7 @@ module.exports = (sequelize) => {
                 type: DataTypes.INTEGER,
                 allowNull: true,
                 validate: {
-                    min: 1,
+                    min: -1,
                     max: 5,
                 },
             },
